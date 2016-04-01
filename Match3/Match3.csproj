@@ -52,7 +52,7 @@
     <Compile Include="World\BlockType.cs" />
     <Compile Include="World\Chain.cs" />
     <Compile Include="World\ChainType.cs" />
-    <Compile Include="World\Field.cs" />
+    <Compile Include="World\BlockField.cs" />
     <Compile Include="World\Grid.cs" />
     <Compile Include="World\Block.cs" />
     <Compile Include="World\Swap.cs" />

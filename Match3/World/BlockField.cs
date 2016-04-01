@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Match3.World
 {
-    public class Field : IEnumerable<Block>
+    public class BlockField : IEnumerable<Block>
     {
         public Block this[Block block]
         {
@@ -19,7 +19,7 @@ namespace Match3.World
             }
             set
             {
-                blocks[block.Y, block.X] = block;
+                blocks[block.Y, block.X] = value;
             }
         }
         public Block this[int y, int x]
@@ -41,7 +41,7 @@ namespace Match3.World
 
         private Block[,] blocks;
 
-        public Field(Block[,] blocks)
+        public BlockField(Block[,] blocks)
         {
             this.blocks = blocks;
 
@@ -105,43 +105,6 @@ namespace Match3.World
 
             blocks[y1, x1] = blocks[y2, x2];
             blocks[y2, x2] = temp;
-        }
-
-        public int GetMaxChainLength(int x, int y)
-        {
-            return GetMaxChainLength(blocks[y, x]);
-        }
-
-        public int GetMaxChainLength(Block block)
-        {
-            int horizontal = 1;
-            int vertical = 1;
-
-            for (int x = block.X + 1; x < Width; ++x)
-                if (blocks[block.Y, x].Usable() && block.Type == blocks[block.Y, x].Type)
-                    horizontal++;
-                else
-                    break;
-
-            for (int x = block.X - 1; x >= 0; --x)
-                if (blocks[block.Y, x].Usable() && block.Type == blocks[block.Y, x].Type)
-                    horizontal++;
-                else
-                    break;
-
-            for (int y = block.Y + 1; y < Height; ++y)
-                if (blocks[y, block.X].Usable() && block.Type == blocks[y, block.X].Type)
-                    vertical++;
-                else
-                    break;
-
-            for (int y = block.Y - 1; y >= 0; --y)
-                if (blocks[y, block.X].Usable() && block.Type == blocks[y, block.X].Type)
-                    vertical++;
-                else
-                    break;
-
-            return Math.Max(horizontal, vertical);
         }
 
         public IEnumerator<Block> GetEnumerator()

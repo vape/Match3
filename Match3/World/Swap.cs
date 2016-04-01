@@ -10,7 +10,7 @@ namespace Match3.World
 {
     public class Swap
     {
-        public static List<Swap> FindSwaps(Field field, int matchLength)
+        public static List<Swap> FindSwaps(BlockField field, int matchLength)
         {
             var swaps = new List<Swap>();
 
@@ -25,8 +25,8 @@ namespace Match3.World
                     {
                         field.Swap(x, y, x + 1, y);
 
-                        if (field.GetMaxChainLength(field[y, x]) >= matchLength ||
-                            field.GetMaxChainLength(field[y, x + 1]) >= matchLength)
+                        if (Chain.FindMaxChainLength(field, field[y, x]) >= matchLength ||
+                            Chain.FindMaxChainLength(field, field[y, x + 1]) >= matchLength)
                         {
                             swaps.Add(new Swap(field[y, x], field[y, x + 1]));
                         }
@@ -38,8 +38,8 @@ namespace Match3.World
                     {
                         field.Swap(x, y, x, y + 1);
 
-                        if (field.GetMaxChainLength(field[y, x]) >= matchLength ||
-                            field.GetMaxChainLength(field[y + 1, x]) >= matchLength)
+                        if (Chain.FindMaxChainLength(field, field[y, x]) >= matchLength ||
+                            Chain.FindMaxChainLength(field, field[y + 1, x]) >= matchLength)
                         {
                             swaps.Add(new Swap(field[y, x], field[y + 1, x]));
                         }

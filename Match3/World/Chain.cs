@@ -10,7 +10,39 @@ namespace Match3.World
 {
     public class Chain
     {
-        public static List<Chain> FindChains(Field field, int matchLength)
+        public static int FindMaxChainLength(BlockField field, Block block)
+        {
+            int horizontal = 1;
+            int vertical = 1;
+
+            for (int x = block.X + 1; x < field.Width; ++x)
+                if (field[block.Y, x].Usable() && block.Type == field[block.Y, x].Type)
+                    horizontal++;
+                else
+                    break;
+
+            for (int x = block.X - 1; x >= 0; --x)
+                if (field[block.Y, x].Usable() && block.Type == field[block.Y, x].Type)
+                    horizontal++;
+                else
+                    break;
+
+            for (int y = block.Y + 1; y < field.Height; ++y)
+                if (field[y, block.X].Usable() && block.Type == field[y, block.X].Type)
+                    vertical++;
+                else
+                    break;
+
+            for (int y = block.Y - 1; y >= 0; --y)
+                if (field[y, block.X].Usable() && block.Type == field[y, block.X].Type)
+                    vertical++;
+                else
+                    break;
+
+            return Math.Max(horizontal, vertical);
+        }
+
+        public static List<Chain> FindChains(BlockField field, int matchLength)
         {
             var vertical = FindVerticalChains(field, matchLength);
             var horizontal = FindHorizontalChains(field, matchLength);
@@ -42,7 +74,7 @@ namespace Match3.World
                            .Concat(intersections).ToList();
         }
 
-        private static List<Chain> FindVerticalChains(Field field, int matchLength)
+        private static List<Chain> FindVerticalChains(BlockField field, int matchLength)
         {
             var chains = new List<Chain>();
 
@@ -75,7 +107,7 @@ namespace Match3.World
             return chains;
         }
 
-        private static List<Chain> FindHorizontalChains(Field field, int matchLength)
+        private static List<Chain> FindHorizontalChains(BlockField field, int matchLength)
         {
             var chains = new List<Chain>();
 

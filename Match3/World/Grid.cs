@@ -24,7 +24,7 @@ namespace Match3.World
         private Point fieldSize;
         private Point fieldPosition;
 
-        private Field field;
+        private BlockField field;
         private Block selectedBlock;
 
         private MouseListener mouseListener;
@@ -43,7 +43,7 @@ namespace Match3.World
 
         protected override void OnLoad()
         {
-            field = new Field(GenerateInitialField());
+            field = new BlockField(GenerateInitialField());
 
             Action<Block> onBlockAppeared = (block) =>
             {
@@ -182,7 +182,7 @@ namespace Match3.World
 
             Action<Block> onBlockDisappeared = (block) =>
             {
-                field[block.Y, block.X] = null;
+                field[block] = null;
 
                 if (field.AnyBlocksActive())
                     return;

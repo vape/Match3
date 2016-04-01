@@ -8,6 +8,7 @@ namespace Match3.World
 {
     public enum ChainType
     {
+        Bomb,
         Horizontal,
         Vertical,
         Intersection

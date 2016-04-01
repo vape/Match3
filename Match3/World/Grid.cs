@@ -32,6 +32,8 @@ namespace Match3.World
         private bool mouseClicked;
         private Point mousePosition;
 
+        List<Block> bombBlocks = new List<Block>();
+
         public Grid(int width, int height)
         {
             blockSize = new Point(blockSideSize);
@@ -176,9 +178,24 @@ namespace Match3.World
                 swap.Make(onInvalidSwap);
         }
 
+        private void ClearBomb(Block bombBlock, Action<Block> callback = null)
+        {
+            var chain = Chain.GetBombChain(field, bombBlock);
+            if (chain == null)
+                return;
+
+            foreach (var block in chain.Blocks)
+            {
+                block.AnimateExploding(callback);
+
+                if (block.Bonus == BlockBonusType.Bomb)
+                    ClearBomb(block, callback);
+            }
+        }
+
         private void Clear()
         {
-            var chains = Chain.FindChains(field, matchLength);
+            var chainsRemoved = 0;
 
             Action<Block> onBlockDisappeared = (block) =>
             {
@@ -187,16 +204,26 @@ namespace Match3.World
                 if (field.AnyBlocksActive())
                     return;
 
-                OnCleared(chains.Count);
+                OnCleared(chainsRemoved);
             };
 
-            foreach (var chain in chains)
+            foreach (var chain in Chain.FindChains(field, matchLength))
             {
+                if (chain.ChainType == ChainType.Intersection)
+                    bombBlocks.Add(chain.IntersectionBlock);
+
                 foreach (var block in chain.Blocks)
+                {
+                    if (block.Bonus == BlockBonusType.Bomb)
+                        ClearBomb(block, onBlockDisappeared);
+
                     block.AnimateDisappearing(onBlockDisappeared);
+                }
+
+                chainsRemoved++;
             }
 
-            if(chains.Count == 0)
+            if(chainsRemoved == 0)
                 OnCleared(0);
         }
 
@@ -211,6 +238,19 @@ namespace Match3.World
 
                 OnRefilled(blocksCreated);
             };
+
+            foreach (var bomb in bombBlocks)
+            {
+                var block = new Block(new Point(bomb.X, bomb.Y),
+                                      GridToScreen(bomb.X, bomb.Y),
+                                      blockSize, bomb.Type, BlockBonusType.Bomb);
+                block.AnimateAppearing(onBlockAppeared);
+                field[bomb.Y, bomb.X] = block;
+
+                blocksCreated++;
+            }
+
+            bombBlocks.Clear();
 
             for (int y = 0; y < fieldSize.Y; ++y)
             {

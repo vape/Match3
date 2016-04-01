@@ -10,6 +10,29 @@ namespace Match3.World
 {
     public class Chain
     {
+        public static Chain GetBombChain(BlockField field, Block bombBlock)
+        {
+            var chainBlocks = new List<Block>();
+
+            for (int y = -1; y <= 1; ++y)
+            {
+                for (int x = -1; x <= 1; ++x)
+                {
+                    if (bombBlock.X + x >= 0 && bombBlock.Y + y >= 0 &&
+                        bombBlock.X + x < field.Width && bombBlock.Y + y < field.Height &&
+                        field[bombBlock.Y + y, bombBlock.X + x].Usable() &&
+                        field[bombBlock.Y + y, bombBlock.X + x].GridPosition != bombBlock.GridPosition)
+
+                        chainBlocks.Add(field[bombBlock.Y + y, bombBlock.X + x]);
+                }
+            }
+
+            if (chainBlocks.Count > 0)
+                return new Chain(chainBlocks, ChainType.Bomb);
+
+            return null;
+        }
+
         public static int FindMaxChainLength(BlockField field, Block block)
         {
             int horizontal = 1;
@@ -156,16 +179,16 @@ namespace Match3.World
 #if DEBUG
             var _blocks = blocks.ToList();
 
-            if (blocks.Any((x) => x.Type != _blocks[0].Type))
+            if (type != ChainType.Bomb && blocks.Any((x) => x.Type != _blocks[0].Type))
                 throw new Exception("Blocks types are not the same.");
 
             if (type == ChainType.Horizontal)
                 if (blocks.Any((x) => x.GridPosition.Y != _blocks[0].GridPosition.Y))
                     throw new Exception("Incorrect chain type.");
 
-            else if (type == ChainType.Vertical)
-                if (blocks.Any((x) => x.GridPosition.X != _blocks[0].GridPosition.X))
-                    throw new Exception("Incorrect chain type.");
+                else if (type == ChainType.Vertical)
+                    if (blocks.Any((x) => x.GridPosition.X != _blocks[0].GridPosition.X))
+                        throw new Exception("Incorrect chain type.");
 #endif
             #endregion
 

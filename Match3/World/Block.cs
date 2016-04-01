@@ -19,10 +19,11 @@ namespace Match3.World
             None,
             Appearing,
             Disappearing,
+            Exploding
         }
 
         private const float defaultMovingSpeed = 500;
-        private const float defaultAnimatingSpeed = 1f;
+        private const float defaultAnimatingSpeed = 10f;
 
         public static BlockType GetRandomBlockType()
         {
@@ -115,6 +116,12 @@ namespace Match3.World
         // Appearing / Disappearing animation
         private Action<Block> appearedCallback;
         private Action<Block> disappearedCallback;
+
+        // Exploding animation
+        private Action<Block> explodedCallback;
+        private float explodingStartTime;
+        private float explodingDelay;
+
         private float alpha;
         private float scale;
 
@@ -166,6 +173,17 @@ namespace Match3.World
             throw new NotImplementedException();
         }
 
+        public void AnimateExploding(Action<Block> explodedCallback = null)
+        {
+            animation = AnimationType.Exploding;
+
+            explodingStartTime = App.Time;
+            scale = 1;
+            explodingDelay = ((float)Utils.GetRand(100, 500) / 1000);
+
+            this.explodedCallback = explodedCallback;
+        }
+
         public void AnimateAppearing(Action<Block> appearedCallback = null)
         {
             animation = AnimationType.Appearing;
@@ -189,6 +207,11 @@ namespace Match3.World
         {
             sBatch.Draw(Texture, ViewRect.ScaleFromCenter(scale), Color);
 
+            if (Bonus == BlockBonusType.Bomb)
+            {
+                sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue),
+                            ViewRect.ScaleFromCenter(0.65f * scale), Color.Yellow);
+            }
 
             if (Selected)
             {
@@ -231,6 +254,9 @@ namespace Match3.World
                 case AnimationType.Disappearing:
                     UpdateDisappearing();
                     break;
+                case AnimationType.Exploding:
+                    UpdateExploding();
+                    break;
             }
         }
 
@@ -265,6 +291,25 @@ namespace Match3.World
 
                 if (disappearedCallback != null)
                     disappearedCallback(this);
+            }
+        }
+
+        private void UpdateExploding()
+        {
+            if (App.Time - explodingStartTime < explodingDelay)
+                return;
+
+            if (scale > 0)
+            {
+                scale -= App.DeltaTime * defaultAnimatingSpeed * 2;
+            }
+            else
+            {
+                animation = AnimationType.None;
+                scale = 0;
+
+                if (explodedCallback != null)
+                    explodedCallback(this);
             }
         }
     }

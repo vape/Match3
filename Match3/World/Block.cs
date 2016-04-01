@@ -14,6 +14,13 @@ namespace Match3.World
 {
     public class Block
     {
+        private enum AnimationType
+        {
+            None,
+            Appearing,
+            Disappearing,
+        }
+
         private const float defaultMovingSpeed = 500;
         private const float defaultAnimatingSpeed = 1f;
 
@@ -56,7 +63,7 @@ namespace Match3.World
         {
             get
             {
-                return !moving && !appearing && !disappearing;
+                return !IsMoving && !IsAnimating;
             }
         }
 
@@ -72,7 +79,7 @@ namespace Match3.World
         {
             get
             {
-                return appearing || disappearing;
+                return animation != AnimationType.None;
             }
         }
 
@@ -83,7 +90,7 @@ namespace Match3.World
         public Texture2D Texture
         { get; private set; }
         public Color Color
-        { get { return new Color(color, alpha); } }
+        { get; private set; }
 
         public int X { get { return GridPosition.X; } }
         public int Y { get { return GridPosition.Y; } }
@@ -96,20 +103,18 @@ namespace Match3.World
         { get; set; }
 
         private bool moving;
-        private bool appearing;
-        private bool disappearing;
+        private AnimationType animation;
 
-        private Action<Block> appearedCallback;
-        private Action<Block> disappearedCallback;
-
-        // Moving animation
+        // Moving
         private Action<Block, Point, Point> movedCallback;
         private Vector2 targetViewPosition;
         private Point targetGridPosition;
         private Point originGridPosition;
         private float movingSpeed;
 
-        private Color color;
+        // Appearing / Disappearing animation
+        private Action<Block> appearedCallback;
+        private Action<Block> disappearedCallback;
         private float alpha;
         private float scale;
 
@@ -123,8 +128,9 @@ namespace Match3.World
             Bonus = blockBonus ?? BlockBonusType.None;
 
             Texture = GetTexture(Type);
+            Color = Color.White;
 
-            color = Color.White;
+            alpha = 1;
             scale = 1;
         }
 
@@ -162,33 +168,33 @@ namespace Match3.World
 
         public void AnimateAppearing(Action<Block> appearedCallback = null)
         {
-            if (disappearing)
-                disappearing = false;
+            animation = AnimationType.Appearing;
 
             alpha = 0;
             scale = 0;
-            appearing = true;
 
             this.appearedCallback = appearedCallback;
         }
 
         public void AnimateDisappearing(Action<Block> disappearedCallback = null)
         {
-            if (appearing)
-                appearing = false;
+            animation = AnimationType.Disappearing;
 
             scale = 1;
-            disappearing = true;
 
             this.disappearedCallback = disappearedCallback;
         }
 
         public void Draw(SpriteBatch sBatch)
         {
-            sBatch.Draw(Texture, ViewRect.ScaleFromCenter(scale).ToMonogameRectangle(), Color);
+            sBatch.Draw(Texture, ViewRect.ScaleFromCenter(scale), Color);
+
 
             if (Selected)
-                sBatch.Draw(Utils.GetSolidRectangleTexture(15, 15, Color.AliceBlue), ViewRect.Position + new Vector2(15, 15), Color.White);
+            {
+                sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue), 
+                            ViewRect.ScaleFromCenter(0.5f));
+            }
         }
 
         public void UpdateMoving()
@@ -217,10 +223,15 @@ namespace Match3.World
 
         public void UpdateAnimation()
         {
-            if (appearing)
-                UpdateAppearing();
-            else if (disappearing)
-                UpdateDisappearing();
+            switch (animation)
+            {
+                case AnimationType.Appearing:
+                    UpdateAppearing();
+                    break;
+                case AnimationType.Disappearing:
+                    UpdateDisappearing();
+                    break;
+            }
         }
 
         private void UpdateAppearing()
@@ -232,7 +243,7 @@ namespace Match3.World
             }
             else
             {
-                appearing = false;
+                animation = AnimationType.None;
                 alpha = 1;
                 scale = 1;
 
@@ -249,7 +260,7 @@ namespace Match3.World
             }
             else
             {
-                disappearing = false;
+                animation = AnimationType.None;
                 scale = 0;
 
                 if (disappearedCallback != null)

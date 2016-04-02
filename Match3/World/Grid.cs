@@ -311,7 +311,12 @@ namespace Match3.World
                 field[bonusBlock] = bonusBlock;
             }
 
-            bonuses.Clear();
+            if (bonuses.Count > 0)
+            {
+                blocksMoved++;
+                bonuses.Clear();
+                return;
+            }
 
             for (int y = fieldSize.Y - 1; y >= 0; --y)
             {

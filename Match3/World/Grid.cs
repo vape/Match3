@@ -11,7 +11,6 @@ using MonoGame.Extended.InputListeners;
 using System.Diagnostics;
 using Match3.Core;
 using Match3.Scenes;
-using Match3.World.Animation;
 
 namespace Match3.World
 {
@@ -64,7 +63,7 @@ namespace Match3.World
             };
 
             foreach (var block in field)
-                block.AttachAnimation(new AppearingAnimation(onBlockAppeared));
+                block.AnimateAppearing(onBlockAppeared);
 
             mouseListener = App.InputListener.AddListener<MouseListener>();
             mouseListener.MouseDown += MouseDownHandler;
@@ -73,7 +72,16 @@ namespace Match3.World
         protected override void OnUpdate()
         {
             foreach (var block in field)
-                block?.Update();
+            {
+                if (block == null)
+                    continue;
+
+                if (block.IsMoving)
+                    block.UpdateMoving();
+
+                if (block.IsAnimating)
+                    block.UpdateAnimation();
+            }
 
             if (mouseClicked)
             {
@@ -184,7 +192,7 @@ namespace Match3.World
             {
                 foreach (var bombBlocks in Chain.GetBombBlocks(field, block))
                 {
-                    bombBlocks.AttachAnimation(new ExplodingAnimation(callback));
+                    bombBlocks.AnimateExploding(callback);
 
                     if (bombBlocks.Bonus != BlockBonusType.None)
                         ClearBonus(bombBlocks, callback);
@@ -197,7 +205,7 @@ namespace Match3.World
                 {
                     // TODO: Set animation delay according to distance from block to lineBlock
 
-                    lineBlock.AttachAnimation(new DisappearingAnimation(callback));
+                    lineBlock.AnimateDisappearing(callback);
 
                     if (lineBlock.Bonus != BlockBonusType.None)
                         ClearBonus(lineBlock, callback);
@@ -233,14 +241,13 @@ namespace Match3.World
                     bonuses.Add(bombBonus);
                 }
 
-                Debug.Assert(chain.Blocks.Count >= 3);
-
                 foreach (var block in chain.Blocks)
                 {
                     if (block.Bonus != BlockBonusType.None)
                         ClearBonus(block, onBlockDisappeared);
 
-                    block.AttachAnimation(new DisappearingAnimation(onBlockDisappeared));
+                    if (block.Usable())
+                        block.AnimateDisappearing(onBlockDisappeared);
                 }
 
                 chainsRemoved++;
@@ -269,7 +276,7 @@ namespace Match3.World
                     if (field[y, x] == null)
                     {
                         var block = new Block(new Point(x, y), GridToScreen(x, y), blockSize);
-                        block.AttachAnimation(new AppearingAnimation(onBlockAppeared));
+                        block.AnimateAppearing(onBlockAppeared);
                         field[y, x] = block;
 
                         blocksCreated++;
@@ -300,7 +307,7 @@ namespace Match3.World
                                            GridToScreen(bonus.GridPosition.X, bonus.GridPosition.Y),
                                            blockSize, bonus.BlockType, bonus.BonusType);
 
-                bonusBlock.AttachAnimation(new AppearingAnimation(onBlockMoved));
+                bonusBlock.AnimateAppearing(onBlockMoved);
                 field[bonusBlock] = bonusBlock;
             }
 

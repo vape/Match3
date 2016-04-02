@@ -1,36 +1,35 @@
-﻿using Match3.Core;
+﻿using System;
+
 using Microsoft.Xna.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using Match3.Core;
+
 
 namespace Match3.World.Animation
 {
     public class MovingAnimation : BlockAnimation
     {
-        private const float speed = 500;
+        private float speed = 5;
 
         private Vector2 targetViewPosition;
         private Vector2 currentViewPosition;
         private Point targetGridPosition;
 
-        public MovingAnimation(Vector2 targetPosition,
-                               Point targetGridPoint,
-                               Action<Block> animationEndCallback)
-            : base(animationEndCallback)
+        public MovingAnimation(Vector2 targetViewPosition,
+                               Point targetGridPosition,
+                               Action<Block> animationEndedCallback)
+            : base(animationEndedCallback)
         {
-            targetViewPosition = targetPosition;
-            targetGridPosition = targetGridPoint;
+            this.targetViewPosition = targetViewPosition;
+            this.targetGridPosition = targetGridPosition;
 
-            this.animationEndCallback = (block) =>
+            this.animationEndedCallback = (block) =>
             {
-                block.GridPosition = targetGridPosition;
-                block.ViewRect = new Rect(targetViewPosition, block.ViewRect.Size);
+                block.GridPosition = this.targetGridPosition;
+                block.ViewRect = new Rect(this.targetViewPosition, block.ViewRect.Size);
 
-                if (animationEndCallback != null)
-                    animationEndCallback(block);
+                if (animationEndedCallback != null)
+                    animationEndedCallback(block);
             };
         }
 
@@ -43,7 +42,7 @@ namespace Match3.World.Animation
         {
             var direction = targetViewPosition - currentViewPosition;
             var distanceToTarget = direction.Length();
-            var moveDistance = speed * App.DeltaTime;
+            var moveDistance = 100 * speed * App.DeltaTime;
 
             if (moveDistance > distanceToTarget)
                 moveDistance = distanceToTarget;

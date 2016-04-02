@@ -48,9 +48,9 @@
     <Compile Include="Scenes\GameScene.cs" />
     <Compile Include="Scenes\MenuScene.cs" />
     <Compile Include="Utilities\Utils.cs" />
-    <Compile Include="World\Animation\AppearingAnimation.cs" />
+    <Compile Include="World\Animation\ScaleUpAnimation.cs" />
     <Compile Include="World\Animation\BlockAnimation.cs" />
-    <Compile Include="World\Animation\DisappearingAnimation.cs" />
+    <Compile Include="World\Animation\ScaleDownAnimation.cs" />
     <Compile Include="World\Animation\ExplodingAnimation.cs" />
     <Compile Include="World\Animation\MovingAnimation.cs" />
     <Compile Include="World\BlockBonusType.cs" />
@@ -58,7 +58,7 @@
     <Compile Include="World\Chain.cs" />
     <Compile Include="World\ChainType.cs" />
     <Compile Include="World\BlockField.cs" />
-    <Compile Include="World\Grid.cs" />
+    <Compile Include="World\GridManager.cs" />
     <Compile Include="World\Block.cs" />
     <Compile Include="World\Swap.cs" />
   </ItemGroup>

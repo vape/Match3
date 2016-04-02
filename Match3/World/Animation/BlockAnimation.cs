@@ -1,12 +1,11 @@
-﻿using Match3.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+
+using Match3.Core;
+
 
 namespace Match3.World.Animation
 {
+    // TODO: Add special falling animation, instead of simple moving
     public abstract class BlockAnimation
     {
         public Block Block
@@ -15,11 +14,11 @@ namespace Match3.World.Animation
         { get; protected set; }
 
         protected float loadedTime;
-        protected Action<Block> animationEndCallback;
+        protected Action<Block> animationEndedCallback;
 
-        public BlockAnimation(Action<Block> animationEndCallback)
+        public BlockAnimation(Action<Block> animationEndedCallback)
         {
-            this.animationEndCallback = animationEndCallback;
+            this.animationEndedCallback = animationEndedCallback;
         }
 
         public void Load(Block block)
@@ -43,10 +42,10 @@ namespace Match3.World.Animation
         {
             Animating = false;
 
-            if (animationEndCallback != null)
+            if (animationEndedCallback != null)
             {
-                animationEndCallback(Block);
-                animationEndCallback = null;
+                animationEndedCallback(Block);
+                animationEndedCallback = null;
             }
         }
 

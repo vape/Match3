@@ -1,11 +1,10 @@
-﻿using Match3.Utilities;
-using Match3.World.Animation;
-using Microsoft.Xna.Framework;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
+
+using Match3.Utilities;
+using Match3.World.Animation;
+
 
 namespace Match3.World
 {
@@ -24,7 +23,7 @@ namespace Match3.World
 
                     if (x < field.Width - 1 && field[y, x + 1].Usable())
                     {
-                        field.Swap(x, y, x + 1, y);
+                        field.SwapBlocks(x, y, x + 1, y);
 
                         var firstChain = Chain.GetMaxChainLength(field, field[y, x]);
                         var secondChain = Chain.GetMaxChainLength(field, field[y, x + 1]);
@@ -32,12 +31,12 @@ namespace Match3.World
                         if (firstChain >= matchLength || secondChain >= matchLength)
                             swaps.Add(new Swap(field[y, x], field[y, x + 1]));
 
-                        field.Swap(x, y, x + 1, y);
+                        field.SwapBlocks(x, y, x + 1, y);
                     }
 
                     if (y < field.Height - 1 && field[y + 1, x].Usable())
                     {
-                        field.Swap(x, y, x, y + 1);
+                        field.SwapBlocks(x, y, x, y + 1);
 
                         var firstChain = Chain.GetMaxChainLength(field, field[y, x]);
                         var secondChain = Chain.GetMaxChainLength(field, field[y + 1, x]);
@@ -45,7 +44,7 @@ namespace Match3.World
                         if (firstChain >= matchLength || secondChain >= matchLength)
                             swaps.Add(new Swap(field[y, x], field[y + 1, x]));
 
-                        field.Swap(x, y, x, y + 1);
+                        field.SwapBlocks(x, y, x, y + 1);
                     }
                 }
             }
@@ -57,31 +56,22 @@ namespace Match3.World
         { get; private set; }
         public Block To
         { get; private set; }
-
         public bool CanSwap
         { get; private set; }
 
         public Swap(Block fromBlock, Block toBlock)
         {
-            #region Debug
-#if DEBUG
-            if (fromBlock == null)
-                throw new ArgumentNullException(nameof(fromBlock));
-            if (toBlock == null)
-                throw new ArgumentNullException(nameof(toBlock));
-#endif
-            #endregion
+            Debug.Assert(fromBlock != null, "\"From\" block is null.");
+            Debug.Assert(toBlock != null, "\"To\" block is null");
 
             From = fromBlock;
             To = toBlock;
-
             CanSwap = CheckSwap();
         }
 
         public void Make(Action<Swap> swappedCallback = null)
         {
-            if (!CanSwap)
-                throw new InvalidOperationException("Can not swap this blocks.");
+            Debug.Assert(CanSwap, "Trying to make invalid swap.");
 
             Action<Block> onMoved = (block) =>
             {

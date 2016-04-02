@@ -1,19 +1,17 @@
-﻿using Match3.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+
+using Match3.Core;
+
 
 namespace Match3.World.Animation
 {
-    public class DisappearingAnimation : BlockAnimation
+    public class ScaleDownAnimation : BlockAnimation
     {
         private float speed = 1;
         private float scale = 1;
 
-        public DisappearingAnimation(Action<Block> animationEndCallback)
-            : base(animationEndCallback)
+        public ScaleDownAnimation(Action<Block> animationEndedCallback)
+            : base(animationEndedCallback)
         { }
 
         protected override Rect OnAnimationUpdate(Rect viewRect)

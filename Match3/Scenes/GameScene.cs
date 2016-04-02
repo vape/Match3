@@ -15,7 +15,7 @@ namespace Match3.Scenes
         public static GameScene Instance
         { get; private set; }
 
-        private Grid grid;
+        private GridManager grid;
         
         public GameScene()
         {
@@ -24,7 +24,7 @@ namespace Match3.Scenes
 
         protected override void OnLoad()
         {
-            grid = new Grid(8, 8);
+            grid = new GridManager(8, 8);
             AddToScene(grid);
         }
     }

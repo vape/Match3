@@ -1,63 +1,15 @@
-﻿using Match3.Utilities;
-using Microsoft.Xna.Framework;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using Match3.Utilities;
+
 
 namespace Match3.World
 {
     public class Chain
     {
-        public static List<Block> GetLineBlocks(BlockField field, Block lineBlock)
-        {
-            var chainBlocks = new List<Block>();
-
-            if (lineBlock.Bonus == BlockBonusType.HorizontalLine)
-            {
-                for (int x = 0; x < field.Width; ++x)
-                {
-                    var block = field[lineBlock.Y, x];
-                    if (block.Usable()/* &&
-                        block.GridPosition != lineBlock.GridPosition*/)
-
-                        chainBlocks.Add(block);
-                }
-            }
-            else if (lineBlock.Bonus == BlockBonusType.VerticalLine)
-            {
-                for (int y = 0; y < field.Height; ++y)
-                {
-                    if (field[y, lineBlock.X].Usable())
-                        chainBlocks.Add(field[y, lineBlock.X]);
-                }
-            }
-
-            return chainBlocks;
-        }
-
-        public static List<Block> GetBombBlocks(BlockField field, Block bombBlock)
-        {
-            var chainBlocks = new List<Block>();
-
-            for (int y = -1; y <= 1; ++y)
-            {
-                for (int x = -1; x <= 1; ++x)
-                {
-                    if (bombBlock.X + x >= 0 && bombBlock.Y + y >= 0 &&
-                        bombBlock.X + x < field.Width && bombBlock.Y + y < field.Height &&
-                        field[bombBlock.Y + y, bombBlock.X + x].Usable())
-
-                        chainBlocks.Add(field[bombBlock.Y + y, bombBlock.X + x]);
-                }
-            }
-
-            return chainBlocks;
-        }
-
-
         public static int GetMaxChainLength(BlockField field, Block block)
         {
             return Math.Max(GetHorizontalChainLength(field, block), 
@@ -115,10 +67,9 @@ namespace Match3.World
                     if (horizontal[h] == null)
                         continue;
 
-                    if (vertical[v].IsIntersect(horizontal[h]))
+                    if (vertical[v].Intersect(horizontal[h]))
                     {
-                        intersections.Add(new Chain(vertical[v].Blocks.Concat(horizontal[h].Blocks),
-                                          ChainType.Intersection));
+                        intersections.Add(new Chain(horizontal[h], vertical[v]));
 
                         vertical[v] = horizontal[h] = null;
                         break;
@@ -197,61 +148,49 @@ namespace Match3.World
             return chains;
         }
 
-
         public BlockType BlockType
         { get; private set; }
         public ChainType ChainType
         { get; private set; }
-
-        public int Length
-        { get { return Blocks.Count; } }
-        public Block IntersectionBlock
-        { get; private set; }
         public List<Block> Blocks
         { get; private set; }
+        public Block IntersectionBlock
+        { get; private set; }
+        public int Length
+        { get; private set; }
+
+        public Chain(Chain horizontal, Chain vertical)
+            : this(horizontal.Blocks, vertical.Blocks)
+        { }
+
+        public Chain(IEnumerable<Block> horizontal, IEnumerable<Block> vertical)
+            : this(horizontal.Concat(vertical), ChainType.Intersection)
+        {
+            IntersectionBlock = GetIntersectionBlock(horizontal, vertical);
+
+            Debug.Assert(IntersectionBlock != null, "Given blocks chain is not an intersection.");
+        }
 
         public Chain(IEnumerable<Block> blocks, ChainType type)
         {
-            #region Debug
-#if DEBUG
-            var _blocks = blocks.ToList();
+            Blocks = blocks.ToList();
 
-            if (blocks.Any((x) => x.Type != _blocks[0].Type))
-                throw new Exception("Blocks types are not the same.");
+            Debug.Assert(Blocks.Count > 2, "Chain is too small.");
+            Debug.Assert(!Blocks.Any((x) => x.Type != Blocks[0].Type), "Different block types in one chain.");
 
             if (type == ChainType.Horizontal)
-            {
-                if (blocks.Any((x) => x.GridPosition.Y != _blocks[0].GridPosition.Y))
-                    throw new Exception("Incorrect chain type.");
-            }
+                Debug.Assert(!Blocks.Any((b) => b.GridPosition.Y != Blocks[0].GridPosition.Y),
+                             "Incorrect chain type. Blocks are not in the same column.");
             else if (type == ChainType.Vertical)
-            {
-                if (blocks.Any((x) => x.GridPosition.X != _blocks[0].GridPosition.X))
-                    throw new Exception("Incorrect chain type.");
-            }
-#endif
-            #endregion
+                Debug.Assert(!Blocks.Any((b) => b.GridPosition.X != Blocks[0].GridPosition.X),
+                             "Incorrect chain type. Blocks are not in the same row.");
 
-            Blocks = blocks.ToList();
             BlockType = Blocks[0].Type;
             ChainType = type;
-
-            Debug.Assert(Blocks.Count > 2);
-
-            if (type == ChainType.Intersection)
-            {
-                IntersectionBlock = GetIntersectionBlock();
-
-                #region Debug
-#if DEBUG
-                if (IntersectionBlock == null)
-                    throw new Exception("Given blocks chain is not an intersection.");
-#endif
-                #endregion
-            }
+            Length = Blocks.Count;
         }
 
-        public bool IsIntersect(Chain other)
+        public bool Intersect(Chain other)
         {
             if ((other.BlockType != BlockType) ||
                 (other.ChainType == ChainType))
@@ -269,14 +208,15 @@ namespace Match3.World
             return false;
         }
 
-        private Block GetIntersectionBlock()
+        private Block GetIntersectionBlock(IEnumerable<Block> horizontal,
+                                           IEnumerable<Block> vertical)
         {
-            foreach (var first in Blocks)
+            foreach (var hor in horizontal)
             {
-                foreach (var second in Blocks)
+                foreach (var ver in vertical)
                 {
-                    if (first.X == second.X && first.Y == second.Y)
-                        return first;
+                    if (hor.X == ver.X && hor.Y == ver.Y)
+                        return hor;
                 }
             }
 

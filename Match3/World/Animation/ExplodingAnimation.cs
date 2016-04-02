@@ -1,9 +1,7 @@
-﻿using Match3.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+
+using Match3.Core;
+
 
 namespace Match3.World.Animation
 {
@@ -13,9 +11,9 @@ namespace Match3.World.Animation
         private float scale = 1;
         private float delay = 0;
 
-        public ExplodingAnimation(Action<Block> animationEndCallback,
+        public ExplodingAnimation(Action<Block> animationEndedCallback,
                                   float delay = 0.35f)
-            : base(animationEndCallback)
+            : base(animationEndedCallback)
         {
             this.delay = delay;
         }

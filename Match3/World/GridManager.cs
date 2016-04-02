@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Xna.Framework.Graphics;
-using Match3.Utilities;
+
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.InputListeners;
-using System.Diagnostics;
+
 using Match3.Core;
-using Match3.Scenes;
+using Match3.Utilities;
 using Match3.World.Animation;
+
 
 namespace Match3.World
 {
-    public class Grid : GameObject
+    public class GridManager : GameObject
     {
         private struct BonusInfo
         {
@@ -24,9 +22,10 @@ namespace Match3.World
             public Point GridPosition;
         }
 
+        private const int matchLength = 3;
+
         private const int blockSideSize = 64;
         private const int blockGap = 4;
-        private const int matchLength = 3;
 
         private Point blockSize;
         private Point fieldSize;
@@ -34,37 +33,36 @@ namespace Match3.World
 
         private BlockField field;
         private Block selectedBlock;
+        private List<BonusInfo> bonuses;
 
         private MouseListener mouseListener;
-
-        private bool mouseClicked;
         private Point mousePosition;
+        private bool mouseClicked;
 
-        List<BonusInfo> bonuses = new List<BonusInfo>();
-
-        public Grid(int width, int height)
+        public GridManager(int width, int height)
         {
             blockSize = new Point(blockSideSize);
             fieldSize = new Point(width, height);
             fieldPosition = new Point((App.Viewport.Width - (width * (blockSideSize + blockGap))) / 2,
                                       (App.Viewport.Height - (height * (blockSideSize + blockGap))) / 2);
-        }
 
+            bonuses = new List<BonusInfo>();
+        }
 
         protected override void OnLoad()
         {
             field = new BlockField(GenerateInitialField());
 
-            Action<Block> onBlockAppeared = (block) =>
+            Action<Block> animationEnded = (block) =>
             {
-                if (field.AnyBlocksAnimating())
+                if (field.Animating)
                     return;
 
                 OnLoaded();
             };
 
             foreach (var block in field)
-                block.AttachAnimation(new AppearingAnimation(onBlockAppeared));
+                block.AttachAnimation(new ScaleUpAnimation(animationEnded));
 
             mouseListener = App.InputListener.AddListener<MouseListener>();
             mouseListener.MouseDown += MouseDownHandler;
@@ -87,12 +85,7 @@ namespace Match3.World
         protected override void OnDraw(SpriteBatch sBatch)
         {
             foreach (var block in field)
-            {
-                if (block == null)
-                    continue;
-
-                block.Draw(sBatch);
-            }
+                block?.Draw(sBatch);
         }
 
 
@@ -135,10 +128,10 @@ namespace Match3.World
             {
                 for (int x = 0; x < fieldSize.X; ++x)
                 {
-                    var viewPos = GridToScreen(x, y);
+                    var viewPos = GridToView(x, y);
                     var gridPos = new Point(x, y);
 
-                    // Assumes matchLength is more or equal to 3
+                    // Assumes matchLength >= 3
                     BlockType blockType;
                     do
                         blockType = Block.GetRandomBlockType();
@@ -157,6 +150,7 @@ namespace Match3.World
             return field;
         }
 
+        #region Field Control
 
         private void PerformSwap(Swap swap)
         {
@@ -178,44 +172,42 @@ namespace Match3.World
                 swap.Make(onInvalidSwap);
         }
 
-        private void ClearBonus(Block block, Action<Block> callback = null)
+        private void ClearBonus(Block bonusBlock, Action<Block> animationEndedCallback = null)
         {
-            if (block.Bonus == BlockBonusType.Bomb)
+            if (bonusBlock.Bonus == BlockBonusType.Bomb)
             {
-                foreach (var bombBlocks in Chain.GetBombBlocks(field, block))
+                foreach (var block in GetBombBonusBlocks(bonusBlock))
                 {
-                    bombBlocks.AttachAnimation(new ExplodingAnimation(callback));
+                    block.AttachAnimation(new ExplodingAnimation(animationEndedCallback));
 
-                    if (bombBlocks.Bonus != BlockBonusType.None &&
-                        bombBlocks != block)
-                        ClearBonus(bombBlocks, callback);
+                    if (block.Bonus != BlockBonusType.None &&
+                        block != bonusBlock)
+                        ClearBonus(block, animationEndedCallback);
                 }
             }
-            else if (block.Bonus == BlockBonusType.HorizontalLine ||
-                     block.Bonus == BlockBonusType.VerticalLine)
+            else if (bonusBlock.Bonus == BlockBonusType.HorizontalLine ||
+                     bonusBlock.Bonus == BlockBonusType.VerticalLine)
             {
-                foreach (var lineBlock in Chain.GetLineBlocks(field, block))
+                foreach (var block in GetLineBonusBlocks(bonusBlock))
                 {
-                    lineBlock.AttachAnimation(new ExplodingAnimation(callback));
+                    block.AttachAnimation(new ExplodingAnimation(animationEndedCallback));
 
-                    if (lineBlock.Bonus != BlockBonusType.None &&
-                        lineBlock != block)
-                        ClearBonus(lineBlock, callback);
+                    if (block.Bonus != BlockBonusType.None &&
+                        block != bonusBlock)
+                        ClearBonus(block, animationEndedCallback);
                 }
             }
         }
 
         private void Clear()
         {
-            Debug.WriteLine("Clear called");
-
             var chains = Chain.FindChains(field, matchLength);
 
-            Action<Block> onBlockDisappeared = (block) =>
+            Action<Block> animationEnded = (block) =>
             {
                 field[block] = null;
 
-                if (field.AnyBlocksAnimating())
+                if (field.Animating)
                     return;
 
                 OnCleared(chains.Count);
@@ -223,14 +215,14 @@ namespace Match3.World
 
             foreach (var chain in chains)
             {
-                SpawnChainBonuses(chain);
+                StoreChainBonuses(chain);
 
                 foreach (var block in chain.Blocks)
                 {
-                    block.AttachAnimation(new DisappearingAnimation(onBlockDisappeared));
+                    block.AttachAnimation(new ScaleDownAnimation(animationEnded));
 
                     if (block.Bonus != BlockBonusType.None)
-                        ClearBonus(block, onBlockDisappeared);
+                        ClearBonus(block, animationEnded);
                 }
             }
 
@@ -240,13 +232,11 @@ namespace Match3.World
 
         private void Refill()
         {
-            Debug.WriteLine("Refil called");
-
             int blocksCreated = 0;
 
-            Action<Block> onBlockAppeared = (block) =>
+            Action<Block> animationEnded = (block) =>
             {
-                if (field.AnyBlocksAnimating())
+                if (field.Animating)
                     return;
 
                 OnRefilled(blocksCreated);
@@ -258,10 +248,18 @@ namespace Match3.World
                 {
                     if (field[y, x] == null)
                     {
-                        var block = new Block(new Point(x, y), GridToScreen(x, y), blockSize);
-                        block.AttachAnimation(new AppearingAnimation(onBlockAppeared));
-                        field[y, x] = block;
+                        var gridPosition = new Point(x, y);
+                        var viewPosition = GridToView(gridPosition);
 
+                        /* Falling animation. Looks a bit ugly
+                        var block = new Block(gridPosition, viewPosition - new Vector2(0, 200), blockSize);
+                        block.AttachAnimation(new MovingAnimation(viewPosition, gridPosition, animationEnded));
+                        */
+
+                        var block = new Block(gridPosition, viewPosition, blockSize);
+                        block.AttachAnimation(new ScaleUpAnimation(animationEnded));
+
+                        field[y, x] = block;
                         blocksCreated++;
                     }
                 }
@@ -273,14 +271,12 @@ namespace Match3.World
 
         private void FillGaps()
         {
-            Debug.WriteLine("Fill gaps called");
-
             int blocksMoved = 0;
             int bonusesAdded = 0;
 
-            Action<Block> onBlockMoved = (block) =>
+            Action<Block> animationEnded = (block) =>
             {
-                if (field.AnyBlocksAnimating())
+                if (field.Animating)
                     return;
 
                 OnGapsFilled(blocksMoved, bonusesAdded);
@@ -288,11 +284,10 @@ namespace Match3.World
 
             foreach (var bonus in bonuses)
             {
-                var bonusBlock = new Block(new Point(bonus.GridPosition.X, bonus.GridPosition.Y),
-                                           GridToScreen(bonus.GridPosition.X, bonus.GridPosition.Y),
+                var bonusBlock = new Block(bonus.GridPosition, GridToView(bonus.GridPosition),
                                            blockSize, bonus.BlockType, bonus.BonusType);
 
-                bonusBlock.AttachAnimation(new AppearingAnimation(onBlockMoved));
+                bonusBlock.AttachAnimation(new ScaleUpAnimation(animationEnded));
                 field[bonusBlock] = bonusBlock;
 
                 bonusesAdded++;
@@ -312,20 +307,15 @@ namespace Match3.World
                         {
                             if (field[i, x].Usable())
                             {
-                                /*
-                                field[i, x].MoveTo(GridToScreen(x, y - offset),
-                                                   new Point(x, y - offset), 
-                                                   setGridPositionImmediately:true,
-                                                   movedCallback: onBlockMoved);
-                                field.Move(x, i, x, y - offset);
-                                */
-                                var targetPosition = GridToScreen(x, y - offset);
                                 var gridPosition = new Point(x, y - offset);
+                                var viewPosition = GridToView(x, y - offset);
 
-                                field[i, x].AttachAnimation(new MovingAnimation(targetPosition,
-                                    gridPosition, onBlockMoved));
+                                field[i, x].AttachAnimation(new MovingAnimation(viewPosition, 
+                                                                                gridPosition, 
+                                                                                animationEnded));
                                 field[i, x].GridPosition = gridPosition;
-                                field.Move(x, i, x, y - offset);
+                                field[y - offset, x] = field[i, x];
+                                field[i, x] = null;
 
                                 blocksMoved++;
                                 offset++;
@@ -338,6 +328,8 @@ namespace Match3.World
             if (blocksMoved == 0 && bonusesAdded == 0)
                 OnGapsFilled(0, 0);
         }
+
+        #endregion
 
         #region Main
 
@@ -372,7 +364,7 @@ namespace Match3.World
 
         #region Utils
         
-        private void SpawnChainBonuses(Chain chain)
+        private void StoreChainBonuses(Chain chain)
         {
             if (chain.ChainType == ChainType.Intersection)
             {
@@ -443,10 +435,54 @@ namespace Match3.World
             selectedBlock = null;
         }
 
-        private Vector2 GridToScreen(int x, int y)
+        private Vector2 GridToView(Point position)
+        {
+            return GridToView(position.X, position.Y);
+        }
+
+        private Vector2 GridToView(int x, int y)
         {
             return new Vector2(fieldPosition.X + (blockSideSize + blockGap) * x,
                                fieldPosition.Y + (blockSideSize + blockGap) * y);
+        }
+
+        public List<Block> GetLineBonusBlocks(Block block)
+        {
+            var blocks = new List<Block>();
+
+            if (block.Bonus == BlockBonusType.HorizontalLine)
+            {
+                for (int x = 0; x < field.Width; ++x)
+                    if (field[block.Y, x].Usable())
+                        blocks.Add(field[block.Y, x]);
+            }
+            else if (block.Bonus == BlockBonusType.VerticalLine)
+            {
+                for (int y = 0; y < field.Height; ++y)
+                    if (field[y, block.X].Usable())
+                        blocks.Add(field[y, block.X]);
+            }
+
+            return blocks;
+        }
+
+        public List<Block> GetBombBonusBlocks(Block block)
+        {
+            var blocks = new List<Block>();
+
+            for (int y = -1; y <= 1; ++y)
+            {
+                for (int x = -1; x <= 1; ++x)
+                {
+                    bool validIndex = block.X + x >= 0 && block.Y + y >= 0 &&
+                                      block.X + x < field.Width && block.Y + y < field.Height;
+
+                    if (validIndex && field[block.Y + y, block.X + x].Usable())
+                        blocks.Add(field[block.Y + y, block.X + x]);
+                }
+            }
+
+            return blocks;
         }
 
         #endregion

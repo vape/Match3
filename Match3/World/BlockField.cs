@@ -1,11 +1,11 @@
-﻿using Match3.Utilities;
-using Microsoft.Xna.Framework;
-using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using Microsoft.Xna.Framework;
+
+using Match3.Utilities;
+
 
 namespace Match3.World
 {
@@ -34,6 +34,14 @@ namespace Match3.World
             }
         }
 
+        public bool Animating
+        {
+            get
+            {
+                return blocks.Any((block) => block != null && block.IsAnimating);
+            }
+        }
+
         public int Width
         { get; private set; }
         public int Height
@@ -49,28 +57,12 @@ namespace Match3.World
             Height = blocks.GetLength(0);
         }
 
-        public bool AnyBlocksAnimating()
+        public void SwapBlocks(Point fromIndexes, Point toIndexes)
         {
-            return blocks.Any((block) => block != null && block.IsAnimating);
+            SwapBlocks(fromIndexes.X, fromIndexes.Y, toIndexes.X, toIndexes.Y);
         }
 
-        public void Move(Point from, Point to)
-        {
-            Move(from.X, from.Y, to.X, to.Y);
-        }
-
-        public void Move(int x1, int y1, int x2, int y2)
-        {
-            blocks[y2, x2] = blocks[y1, x1];
-            blocks[y1, x1] = null;
-        }
-
-        public void Swap(Point from, Point to)
-        {
-            Swap(from.X, from.Y, to.X, to.Y);
-        }
-
-        public void Swap(int x1, int y1, int x2, int y2)
+        public void SwapBlocks(int x1, int y1, int x2, int y2)
         {
             var temp = blocks[y1, x1];
 

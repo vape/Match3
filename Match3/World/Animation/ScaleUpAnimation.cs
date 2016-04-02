@@ -1,19 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using Match3.Core;
+
 
 namespace Match3.World.Animation
 {
-    public class AppearingAnimation : BlockAnimation
+    public class ScaleUpAnimation : BlockAnimation
     {
         private float speed = 1;
         private float scale = 0;
 
-        public AppearingAnimation(Action<Block> animationEndCallback)
-            : base(animationEndCallback)
+        public ScaleUpAnimation(Action<Block> animationEndedCallback)
+            : base(animationEndedCallback)
         { }
 
         protected override Rect OnAnimationUpdate(Rect viewRect)

@@ -1,22 +1,17 @@
-﻿using Microsoft.Xna.Framework;
-using MonoGame.Extended.InputListeners;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Match3.Utilities;
+
 using Match3.Core;
-using System.Diagnostics;
+using Match3.Utilities;
 using Match3.World.Animation;
+
 
 namespace Match3.World
 {
     public class Block
     {
-        private const float defaultMovingSpeed = 500;
-
         public static BlockType GetRandomBlockType()
         {
             var types = Enum.GetValues(typeof(BlockType));
@@ -64,10 +59,6 @@ namespace Match3.World
         { get; private set; }
         public BlockType Type
         { get; private set; }
-        public Texture2D Texture
-        { get; private set; }
-        public Color Color
-        { get; private set; }
 
         public int X { get { return GridPosition.X; } }
         public int Y { get { return GridPosition.Y; } }
@@ -79,21 +70,22 @@ namespace Match3.World
         public bool Selected
         { get; set; }
 
-        private bool moving;
-        private Rect drawRect;
         private BlockAnimation animation;
+        private Rect drawRect;
+        private Texture2D texture;
+        private Color color;
 
         public Block(Point gridPosition, Vector2 viewPosition, Point viewSize,
                      BlockType? blockType = null, BlockBonusType? blockBonus = null)
         {
-            GridPosition = gridPosition;
-            ViewRect = new Rect(viewPosition, viewSize);
-
             Type = blockType ?? GetRandomBlockType();
             Bonus = blockBonus ?? BlockBonusType.None;
 
-            Texture = GetTexture(Type);
-            Color = Color.White;
+            GridPosition = gridPosition;
+            ViewRect = new Rect(viewPosition, viewSize);
+
+            texture = GetTexture(Type);
+            color = Color.White;
         }
 
         public void AttachAnimation(BlockAnimation animation)
@@ -123,8 +115,9 @@ namespace Match3.World
 
         public void Draw(SpriteBatch sBatch)
         {
-            sBatch.Draw(Texture, drawRect, Color);
+            sBatch.Draw(texture, drawRect, color);
 
+            // TODO: Get rid of this
             if (Bonus == BlockBonusType.Bomb)
             {
                 sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue),

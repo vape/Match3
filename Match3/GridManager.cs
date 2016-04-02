@@ -24,9 +24,8 @@ namespace Match3
         }
 
         private const int matchLength = 3;
-
         private const int blockSideSize = 48;
-        private const int blockGap = 4;
+        private const int blockGap = 8;
 
         public bool FieldAnimating
         {
@@ -58,8 +57,8 @@ namespace Match3
         {
             blockSize = new Point(blockSideSize);
             fieldSize = new Point(width, height);
-            fieldPosition = new Point((App.Viewport.Width - (width * (blockSideSize + blockGap))) / 2,
-                                      (App.Viewport.Height - (height * (blockSideSize + blockGap))) / 2);
+            fieldPosition = new Point((App.Viewport.Width - (width * (blockSideSize + blockGap)) + blockGap) / 2,
+                                      (App.Viewport.Height - (height * (blockSideSize + blockGap)) + blockGap) / 2);
 
             bonuses = new List<BonusInfo>();
         }

@@ -1,10 +1,12 @@
-﻿using Match3.Core;
-using Match3.Scenes;
+﻿using System;
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.InputListeners;
-using System;
+
+using Match3.Core;
+using Match3.Scenes;
+
 
 namespace Match3
 {
@@ -63,6 +65,7 @@ namespace Match3
             instance.exitRequested = true;
         }
 
+        Texture2D background;
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
@@ -89,7 +92,9 @@ namespace Match3
             InputListener = new InputListenerManager();
 
             SetNextScene(new GameScene());
-            
+
+            background = Content.Load<Texture2D>("Background");
+
             base.Initialize();
         }
 
@@ -130,6 +135,7 @@ namespace Match3
             GraphicsDevice.Clear(Color.White);
 
             spriteBatch.Begin();
+            spriteBatch.Draw(background, Viewport.Bounds, Color.White);
 
             if (currentScene != null)
                 currentScene.Draw(spriteBatch);

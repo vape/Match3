@@ -20,31 +20,29 @@ namespace Match3.World
             return type;
         }
 
-        public static Texture2D GetTexture(BlockType blockType)
+        public static void GetTexture(BlockType blockType, 
+                                      out Texture2D texture, 
+                                      out Texture2D selected)
         {
-            Color color = Color.White;
-            Color[] colors = new Color[] { Color.Red, Color.Green, Color.Blue };
+            var name = blockType.ToString();
+            var index = Utils.GetRand(1, 3);
 
-            switch (blockType)
+            texture = App.LoadContent<Texture2D>(String.Format("Blocks/{0}_{1}", name, index));
+            selected = App.LoadContent<Texture2D>(String.Format("Blocks/{0}_{1}_Selected", name, index));
+        }
+
+        public static void GetBonusTexture(BlockBonusType bonusType,
+                                           out Texture2D texture)
+        {
+            if (bonusType == BlockBonusType.None)
             {
-                case BlockType.Red:
-                    color = Color.Red;
-                    break;
-                case BlockType.Green:
-                    color = Color.Green;
-                    break;
-                case BlockType.Blue:
-                    color = Color.Blue;
-                    break;
-                case BlockType.Violet:
-                    color = Color.Violet;
-                    break;
-                case BlockType.Black:
-                    color = Color.Black;
-                    break;
+                texture = null;
+                return;
             }
 
-            return Utils.GetSolidRectangleTexture(64, 64, color);
+            var name = bonusType.ToString();
+
+            texture = App.LoadContent<Texture2D>(String.Format("Blocks/Bonus_{0}", name));
         }
 
         public bool IsAnimating
@@ -70,9 +68,11 @@ namespace Match3.World
         public bool Selected
         { get; set; }
 
+        private Texture2D bonusTexture;
         private BlockAnimation animation;
         private Rect drawRect;
         private Texture2D texture;
+        private Texture2D selected;
         private Color color;
 
         public Block(Point gridPosition, Vector2 viewPosition, Point viewSize,
@@ -84,7 +84,9 @@ namespace Match3.World
             GridPosition = gridPosition;
             ViewRect = new Rect(viewPosition, viewSize);
 
-            texture = GetTexture(Type);
+            GetTexture(Type, out texture, out selected);
+            GetBonusTexture(Bonus, out bonusTexture);
+
             color = Color.White;
         }
 
@@ -115,25 +117,21 @@ namespace Match3.World
 
         public void Draw(SpriteBatch sBatch)
         {
-            sBatch.Draw(texture, drawRect, color);
+            if (Bonus != BlockBonusType.None)
+            {
+                sBatch.Draw(bonusTexture, drawRect);
 
-            // TODO: Get rid of this
-            if (Bonus == BlockBonusType.Bomb)
-            {
-                sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue),
-                            drawRect.ScaleFromCenter(0.65f), Color.Yellow);
+                if (Selected)
+                    sBatch.Draw(selected, drawRect.ScaleFromCenter(0.5f), color);
+                else
+                    sBatch.Draw(texture, drawRect.ScaleFromCenter(0.5f), color);
             }
-            else if (Bonus == BlockBonusType.HorizontalLine ||
-                     Bonus == BlockBonusType.VerticalLine)
+            else
             {
-                sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue),
-                            drawRect.ScaleFromCenter(0.65f), Color.Purple);
-            }
-
-            if (Selected)
-            {
-                sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue), 
-                            drawRect.ScaleFromCenter(0.35f));
+                if (Selected)
+                    sBatch.Draw(selected, drawRect, color);
+                else
+                    sBatch.Draw(texture, drawRect, color);
             }
         }
     }

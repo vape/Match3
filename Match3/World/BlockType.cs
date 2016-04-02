@@ -2,10 +2,10 @@
 {
     public enum BlockType
     {
-        Red,
-        Green,
         Blue,
-        Violet,
-        Black
+        Green,
+        Orange,
+        Pink,
+        Yellow
     }
 }

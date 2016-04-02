@@ -1,25 +1,33 @@
-﻿using Match3.Core;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using Match3.Core;
+
 
 namespace Match3.Utilities
 {
     public static partial class Utils
     {
+        public static void DrawStringWithShadow(this SpriteBatch spriteBatch, BitmapFont font,
+                                                string text, Vector2 position, Color color,
+                                                Color? shadowColor = null,
+                                                Vector2? shadowOffset = null)
+        {
+            var shadowPosition = position + (shadowOffset ?? new Vector2(1, 2));
+
+            spriteBatch.DrawString(font, text, shadowPosition, shadowColor ?? new Color(Color.Black, 0.5f));
+            spriteBatch.DrawString(font, text, position, color);
+        }
+
         public static void DrawStringFromCenter(this SpriteBatch spriteBatch, BitmapFont font, 
-                                                string text, Point position, Color color)
+                                                string text, Vector2 position, Color color)
         {
             var rect = font.GetStringRectangle(text, Vector2.Zero);
-            position = new Point(position.X - (rect.Size.X / 2),
-                                 position.Y - (rect.Size.Y / 2));
+            position = new Vector2(position.X - (rect.Size.X / 2),
+                                   position.Y - (rect.Size.Y / 2));
 
-            spriteBatch.DrawString(font, text, position.ToVector2(), color);
+            spriteBatch.DrawString(font, text, position, color);
         }
 
         public static void Draw(this SpriteBatch spriteBatch, Texture2D texture,

@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
 
 using Match3.Core;
 using Match3.Utilities;
-using Microsoft.Xna.Framework.Input;
+
 
 namespace Match3
 {
@@ -25,30 +26,35 @@ namespace Match3
         public GameScreen CurrentScreen
         { get; set; }
 
+        private int score;
         private float stopTime;
         private List<ScoreLabel> labels;
         private float labelAliveTime;
-        private int score;
 
-        private BitmapFont riffic16;
         private BitmapFont riffic24;
         private BitmapFont riffic32;
         private BitmapFont riffic48;
         private BitmapFont riffic96;
 
+        private Texture2D leftLabelBackground;
+        private Texture2D rightLabelBackground;
+
         private float resultScreenAlpha = 0;
 
         public UIManager(float levelTime)
         {
+            score = 0;
             stopTime = App.Time + levelTime;
-            labelAliveTime = 5;
             labels = new List<ScoreLabel>();
+            labelAliveTime = 4;
 
-            riffic16 = App.LoadContent<BitmapFont>("Fonts/Riffic_16");
             riffic24 = App.LoadContent<BitmapFont>("Fonts/Riffic_24");
             riffic32 = App.LoadContent<BitmapFont>("Fonts/Riffic_32");
             riffic48 = App.LoadContent<BitmapFont>("Fonts/Riffic_48");
             riffic96 = App.LoadContent<BitmapFont>("Fonts/Riffic_96");
+
+            leftLabelBackground = App.LoadContent<Texture2D>("LeftLabelBackground");
+            rightLabelBackground = App.LoadContent<Texture2D>("RightLabelBackground");
         }
 
         public void AddScore(int score, int multiplier)
@@ -78,7 +84,7 @@ namespace Match3
         private void UpdateResultScreen()
         {
             if (resultScreenAlpha < 0.85f)
-                resultScreenAlpha += App.DeltaTime * 3;
+                resultScreenAlpha += App.DeltaTime * 2;
 
             var keyboardState = Keyboard.GetState();
 
@@ -103,29 +109,36 @@ namespace Match3
 
         private void DrawGameScreen(SpriteBatch sBatch)
         {
-            var scoreLabelPosition = new Vector2(25, 20);
-            var timeLabelPosition = new Vector2(App.Viewport.Width - 105, 20);
+            var scoreLabelPosition = new Vector2(20, 25);
+            var timeLabelPosition = new Vector2(App.Viewport.Width - 130, 25);
+
+            var scoreLabelBackgroundRect = new Rectangle(0, 0, 252, 84);
+            var timeLabelBackgroundRect = new Rectangle(App.Viewport.Width - 252, 0, 252, 84);
+
+            sBatch.Draw(leftLabelBackground, scoreLabelBackgroundRect, Color.White);
+            sBatch.Draw(rightLabelBackground, timeLabelBackgroundRect, Color.White);
 
             var timeLeft = stopTime - App.Time > 0 ? stopTime - App.Time : 0;
 
-            sBatch.DrawString(riffic32, String.Format("Score: {0}", score), scoreLabelPosition, Color.Black);
-            sBatch.DrawString(riffic32, String.Format("{0:00.0}", timeLeft), timeLabelPosition, Color.Black);
+            sBatch.DrawStringWithShadow(riffic32, String.Format("Score: {0:000000}", score), scoreLabelPosition, Color.White);
+            sBatch.DrawStringWithShadow(riffic32, String.Format("{0:00.0}", timeLeft), timeLabelPosition, Color.White);
 
             for (int i = 0; i < labels.Count; ++i)
             {
-                var position = new Vector2(25, 60 + (riffic32.LineHeight * i));
-                var alpha = 1 - (App.Time - labels[i].CreationTime) / labelAliveTime;
+                var position = new Vector2(20, 100 + (riffic32.LineHeight * i));
+                var alpha = (1 - (App.Time - labels[i].CreationTime) / labelAliveTime) / 3;
 
-                sBatch.DrawString(riffic24, labels[i].Text, position, new Color(Color.Black, alpha));
+                sBatch.DrawString(riffic32, labels[i].Text, position, new Color(Color.Black, alpha));
             }
         }
 
         private void DrawResultScreen(SpriteBatch sBatch)
         {
             sBatch.DrawRect(App.Viewport.Bounds, new Color(Color.Black, resultScreenAlpha));
-            sBatch.DrawStringFromCenter(riffic96, "SCORE: " + score, App.Viewport.Bounds.Center, Color.White);
+
+            sBatch.DrawStringFromCenter(riffic96, "SCORE: " + score, App.Viewport.Bounds.Center.ToVector2(), Color.White);
             sBatch.DrawStringFromCenter(riffic24, "press Space to restart, or Escape to exit to menu",
-                                        App.Viewport.Bounds.Center + new Point(0, 50), Color.White);
+                                        (App.Viewport.Bounds.Center + new Point(0, 50)).ToVector2(), Color.White);
         }
     }
 }

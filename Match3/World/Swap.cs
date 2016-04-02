@@ -25,11 +25,11 @@ namespace Match3.World
                     {
                         field.Swap(x, y, x + 1, y);
 
-                        if (Chain.FindMaxChainLength(field, field[y, x]) >= matchLength ||
-                            Chain.FindMaxChainLength(field, field[y, x + 1]) >= matchLength)
-                        {
+                        var firstChain = Chain.GetMaxChainLength(field, field[y, x]);
+                        var secondChain = Chain.GetMaxChainLength(field, field[y, x + 1]);
+
+                        if (firstChain >= matchLength || secondChain >= matchLength)
                             swaps.Add(new Swap(field[y, x], field[y, x + 1]));
-                        }
 
                         field.Swap(x, y, x + 1, y);
                     }
@@ -38,11 +38,11 @@ namespace Match3.World
                     {
                         field.Swap(x, y, x, y + 1);
 
-                        if (Chain.FindMaxChainLength(field, field[y, x]) >= matchLength ||
-                            Chain.FindMaxChainLength(field, field[y + 1, x]) >= matchLength)
-                        {
+                        var firstChain = Chain.GetMaxChainLength(field, field[y, x]);
+                        var secondChain = Chain.GetMaxChainLength(field, field[y + 1, x]);
+
+                        if (firstChain >= matchLength || secondChain >= matchLength)
                             swaps.Add(new Swap(field[y, x], field[y + 1, x]));
-                        }
 
                         field.Swap(x, y, x, y + 1);
                     }
@@ -77,16 +77,12 @@ namespace Match3.World
             CanSwap = CheckSwap();
         }
 
-        public Swap()
-        {
-        }
-
         public void Make(Action<Swap> swappedCallback = null)
         {
             if (!CanSwap)
                 throw new InvalidOperationException("Can not swap this blocks.");
 
-            Action<Block, Point, Point> onMoved = (block, originPos, newPos) =>
+            Action<Block> onMoved = (block) =>
             {
                 if (From.IsMoving || To.IsMoving)
                     return;

@@ -16,6 +16,13 @@ namespace Match3.World
 {
     public class Grid : GameObject
     {
+        private struct BonusInfo
+        {
+            public BlockBonusType BonusType;
+            public BlockType BlockType;
+            public Point GridPosition;
+        }
+
         private const int blockSideSize = 64;
         private const int blockGap = 4;
         private const int matchLength = 3;
@@ -32,7 +39,7 @@ namespace Match3.World
         private bool mouseClicked;
         private Point mousePosition;
 
-        List<Block> bombBlocks = new List<Block>();
+        List<BonusInfo> bonuses = new List<BonusInfo>();
 
         public Grid(int width, int height)
         {
@@ -169,6 +176,7 @@ namespace Match3.World
             Action<Swap> onValidSwap = (s) =>
             {
                 field.SwapValues(s.From.GridPosition, s.To.GridPosition);
+
                 OnSwapped(s);
             };
 
@@ -178,18 +186,30 @@ namespace Match3.World
                 swap.Make(onInvalidSwap);
         }
 
-        private void ClearBomb(Block bombBlock, Action<Block> callback = null)
+        private void ClearBonus(Block block, Action<Block> callback = null)
         {
-            var chain = Chain.GetBombChain(field, bombBlock);
-            if (chain == null)
-                return;
-
-            foreach (var block in chain.Blocks)
+            if (block.Bonus == BlockBonusType.Bomb)
             {
-                block.AnimateExploding(callback);
+                foreach (var bombBlocks in Chain.GetBombBlocks(field, block))
+                {
+                    bombBlocks.AnimateExploding(callback);
 
-                if (block.Bonus == BlockBonusType.Bomb)
-                    ClearBomb(block, callback);
+                    if (bombBlocks.Bonus != BlockBonusType.None)
+                        ClearBonus(bombBlocks, callback);
+                }
+            }
+            else if (block.Bonus == BlockBonusType.HorizontalLine ||
+                     block.Bonus == BlockBonusType.VerticalLine)
+            {
+                foreach (var lineBlock in Chain.GetLineBlocks(field, block))
+                {
+                    // TODO: Set animation delay according to distance from block to lineBlock
+
+                    lineBlock.AnimateDisappearing(callback);
+
+                    if (lineBlock.Bonus != BlockBonusType.None)
+                        ClearBonus(lineBlock, callback);
+                }
             }
         }
 
@@ -210,14 +230,24 @@ namespace Match3.World
             foreach (var chain in Chain.FindChains(field, matchLength))
             {
                 if (chain.ChainType == ChainType.Intersection)
-                    bombBlocks.Add(chain.IntersectionBlock);
+                {
+                    var bombBonus = new BonusInfo()
+                    {
+                        BonusType = BlockBonusType.Bomb,
+                        BlockType = chain.IntersectionBlock.Type,
+                        GridPosition = chain.IntersectionBlock.GridPosition
+                    };
+
+                    bonuses.Add(bombBonus);
+                }
 
                 foreach (var block in chain.Blocks)
                 {
-                    if (block.Bonus == BlockBonusType.Bomb)
-                        ClearBomb(block, onBlockDisappeared);
+                    if (block.Bonus != BlockBonusType.None)
+                        ClearBonus(block, onBlockDisappeared);
 
-                    block.AnimateDisappearing(onBlockDisappeared);
+                    if (block.Usable())
+                        block.AnimateDisappearing(onBlockDisappeared);
                 }
 
                 chainsRemoved++;
@@ -238,19 +268,6 @@ namespace Match3.World
 
                 OnRefilled(blocksCreated);
             };
-
-            foreach (var bomb in bombBlocks)
-            {
-                var block = new Block(new Point(bomb.X, bomb.Y),
-                                      GridToScreen(bomb.X, bomb.Y),
-                                      blockSize, bomb.Type, BlockBonusType.Bomb);
-                block.AnimateAppearing(onBlockAppeared);
-                field[bomb.Y, bomb.X] = block;
-
-                blocksCreated++;
-            }
-
-            bombBlocks.Clear();
 
             for (int y = 0; y < fieldSize.Y; ++y)
             {
@@ -275,13 +292,26 @@ namespace Match3.World
         {
             int blocksMoved = 0;
 
-            Action<Block, Point, Point> onBlockMoved = (block, originPos, newPos) =>
+            Action<Block> onBlockMoved = (block) =>
             {
-                if (field.AnyBlocksMoving())
+                // TODO: Create moving animation
+                if (field.AnyBlocksActive())
                     return;
 
                 OnGapsFilled(blocksMoved);
             };
+
+            foreach (var bonus in bonuses)
+            {
+                var bonusBlock = new Block(new Point(bonus.GridPosition.X, bonus.GridPosition.Y),
+                                           GridToScreen(bonus.GridPosition.X, bonus.GridPosition.Y),
+                                           blockSize, bonus.BlockType, bonus.BonusType);
+
+                bonusBlock.AnimateAppearing(onBlockMoved);
+                field[bonusBlock] = bonusBlock;
+            }
+
+            bonuses.Clear();
 
             for (int y = fieldSize.Y - 1; y >= 0; --y)
             {
@@ -317,6 +347,7 @@ namespace Match3.World
 
         private void OnSwapped(Swap swap)
         {
+            TryPlaceLineBonus(swap);
             Clear();
         }
 
@@ -347,6 +378,45 @@ namespace Match3.World
         #endregion
 
         #region Utils
+
+        private void TryPlaceLineBonus(Swap swap)
+        {
+            BlockBonusType bonusType = BlockBonusType.None;
+            Block lineBonusBlock = null;
+
+            if (Chain.GetHorizontalChainLength(field, swap.To) >= 4)
+            {
+                lineBonusBlock = swap.To;
+                bonusType = BlockBonusType.HorizontalLine;
+            }
+            else if (Chain.GetVerticalChainLength(field, swap.To) >= 4)
+            {
+                lineBonusBlock = swap.To;
+                bonusType = BlockBonusType.VerticalLine;
+            }
+            else if (Chain.GetHorizontalChainLength(field, swap.From) >= 4)
+            {
+                lineBonusBlock = swap.From;
+                bonusType = BlockBonusType.HorizontalLine;
+            }
+            else if (Chain.GetVerticalChainLength(field, swap.From) >= 4)
+            {
+                lineBonusBlock = swap.From;
+                bonusType = BlockBonusType.VerticalLine;
+            }
+
+            if (lineBonusBlock != null)
+            {
+                var bonus = new BonusInfo()
+                {
+                    BlockType = lineBonusBlock.Type,
+                    BonusType = bonusType,
+                    GridPosition = lineBonusBlock.GridPosition
+                };
+
+                bonuses.Add(bonus);
+            }
+        }
 
         private bool IsValidSwap(Swap swap)
         {

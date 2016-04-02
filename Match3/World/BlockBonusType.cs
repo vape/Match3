@@ -10,6 +10,7 @@ namespace Match3.World
     {
         None,
         Bomb,
-        Line
+        HorizontalLine,
+        VerticalLine
     }
 }

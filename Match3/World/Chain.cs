@@ -10,7 +10,37 @@ namespace Match3.World
 {
     public class Chain
     {
-        public static Chain GetBombChain(BlockField field, Block bombBlock)
+        public static List<Block> GetLineBlocks(BlockField field, Block lineBlock)
+        {
+            var chainBlocks = new List<Block>();
+
+            if (lineBlock.Bonus == BlockBonusType.HorizontalLine)
+            {
+                for (int x = 0; x < field.Width; ++x)
+                {
+                    var block = field[lineBlock.Y, x];
+                    if (block.Usable() &&
+                        block.GridPosition != lineBlock.GridPosition)
+
+                        chainBlocks.Add(block);
+                }
+            }
+            else if (lineBlock.Bonus == BlockBonusType.VerticalLine)
+            {
+                for (int y = 0; y < field.Height; ++y)
+                {
+                    var block = field[y, lineBlock.X];
+                    if (block.Usable() &&
+                        block.GridPosition != lineBlock.GridPosition)
+
+                        chainBlocks.Add(field[y, lineBlock.X]);
+                }
+            }
+
+            return chainBlocks;
+        }
+
+        public static List<Block> GetBombBlocks(BlockField field, Block bombBlock)
         {
             var chainBlocks = new List<Block>();
 
@@ -18,51 +48,61 @@ namespace Match3.World
             {
                 for (int x = -1; x <= 1; ++x)
                 {
+                    var block = field[bombBlock.Y + y, bombBlock.X + x];
                     if (bombBlock.X + x >= 0 && bombBlock.Y + y >= 0 &&
                         bombBlock.X + x < field.Width && bombBlock.Y + y < field.Height &&
-                        field[bombBlock.Y + y, bombBlock.X + x].Usable() &&
-                        field[bombBlock.Y + y, bombBlock.X + x].GridPosition != bombBlock.GridPosition)
+                        block.Usable() && block.GridPosition != bombBlock.GridPosition)
 
-                        chainBlocks.Add(field[bombBlock.Y + y, bombBlock.X + x]);
+                        chainBlocks.Add(block);
                 }
             }
 
-            if (chainBlocks.Count > 0)
-                return new Chain(chainBlocks, ChainType.Bomb);
-
-            return null;
+            return chainBlocks;
         }
 
-        public static int FindMaxChainLength(BlockField field, Block block)
+
+        public static int GetMaxChainLength(BlockField field, Block block)
         {
-            int horizontal = 1;
-            int vertical = 1;
+            return Math.Max(GetHorizontalChainLength(field, block), 
+                            GetVerticalChainLength(field, block));
+        }
 
-            for (int x = block.X + 1; x < field.Width; ++x)
-                if (field[block.Y, x].Usable() && block.Type == field[block.Y, x].Type)
-                    horizontal++;
-                else
-                    break;
-
-            for (int x = block.X - 1; x >= 0; --x)
-                if (field[block.Y, x].Usable() && block.Type == field[block.Y, x].Type)
-                    horizontal++;
-                else
-                    break;
+        public static int GetVerticalChainLength(BlockField field, Block block)
+        {
+            int length = 1;
 
             for (int y = block.Y + 1; y < field.Height; ++y)
                 if (field[y, block.X].Usable() && block.Type == field[y, block.X].Type)
-                    vertical++;
+                    length++;
                 else
                     break;
 
             for (int y = block.Y - 1; y >= 0; --y)
                 if (field[y, block.X].Usable() && block.Type == field[y, block.X].Type)
-                    vertical++;
+                    length++;
                 else
                     break;
 
-            return Math.Max(horizontal, vertical);
+            return length;
+        }
+
+        public static int GetHorizontalChainLength(BlockField field, Block block)
+        {
+            int length = 1;
+
+            for (int x = block.X + 1; x < field.Width; ++x)
+                if (field[block.Y, x].Usable() && block.Type == field[block.Y, x].Type)
+                    length++;
+                else
+                    break;
+
+            for (int x = block.X - 1; x >= 0; --x)
+                if (field[block.Y, x].Usable() && block.Type == field[block.Y, x].Type)
+                    length++;
+                else
+                    break;
+
+            return length;
         }
 
         public static List<Chain> FindChains(BlockField field, int matchLength)
@@ -73,9 +113,6 @@ namespace Match3.World
 
             for (int v = 0; v < vertical.Count; ++v)
             {
-                /* if (vertical[v] == null)
-                    continue; */
-
                 for (int h = 0; h < horizontal.Count; ++h)
                 {
                     if (horizontal[h] == null)
@@ -163,11 +200,14 @@ namespace Match3.World
             return chains;
         }
 
+
         public BlockType BlockType
         { get; private set; }
         public ChainType ChainType
         { get; private set; }
 
+        public int Length
+        { get { return Blocks.Count; } }
         public Block IntersectionBlock
         { get; private set; }
         public List<Block> Blocks
@@ -179,16 +219,19 @@ namespace Match3.World
 #if DEBUG
             var _blocks = blocks.ToList();
 
-            if (type != ChainType.Bomb && blocks.Any((x) => x.Type != _blocks[0].Type))
+            if (blocks.Any((x) => x.Type != _blocks[0].Type))
                 throw new Exception("Blocks types are not the same.");
 
             if (type == ChainType.Horizontal)
+            {
                 if (blocks.Any((x) => x.GridPosition.Y != _blocks[0].GridPosition.Y))
                     throw new Exception("Incorrect chain type.");
-
-                else if (type == ChainType.Vertical)
-                    if (blocks.Any((x) => x.GridPosition.X != _blocks[0].GridPosition.X))
-                        throw new Exception("Incorrect chain type.");
+            }
+            else if (type == ChainType.Vertical)
+            {
+                if (blocks.Any((x) => x.GridPosition.X != _blocks[0].GridPosition.X))
+                    throw new Exception("Incorrect chain type.");
+            }
 #endif
             #endregion
 

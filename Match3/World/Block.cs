@@ -107,7 +107,7 @@ namespace Match3.World
         private AnimationType animation;
 
         // Moving
-        private Action<Block, Point, Point> movedCallback;
+        private Action<Block> movedCallback;
         private Vector2 targetViewPosition;
         private Point targetGridPosition;
         private Point originGridPosition;
@@ -142,7 +142,7 @@ namespace Match3.World
         }
 
         public void MoveTo(Vector2 targetViewPosition, Point targetGridPosition,
-                           Action<Block, Point, Point> movedCallback = null,
+                           Action<Block> movedCallback = null,
                            bool setGridPositionImmediately = false,
                            float speed = defaultMovingSpeed)
         {
@@ -159,18 +159,12 @@ namespace Match3.World
         }
 
         public void MoveTo(Block block, 
-                           Action<Block, Point, Point> movedCallback = null,
+                           Action<Block> movedCallback = null,
                            bool setGridPositionImmediately = false,
                            float speed = defaultMovingSpeed)
         {
             MoveTo(block.ViewRect.Position, block.GridPosition, movedCallback, 
-                 setGridPositionImmediately, speed);
-        }
-
-        // TODO: Animate falling on refill
-        public void AnimateFalling()
-        {
-            throw new NotImplementedException();
+                   setGridPositionImmediately, speed);
         }
 
         public void AnimateExploding(Action<Block> explodedCallback = null)
@@ -179,7 +173,7 @@ namespace Match3.World
 
             explodingStartTime = App.Time;
             scale = 1;
-            explodingDelay = ((float)Utils.GetRand(100, 500) / 1000);
+            explodingDelay = ((float)Utils.GetRand(350, 600) / 1000);
 
             this.explodedCallback = explodedCallback;
         }
@@ -212,6 +206,12 @@ namespace Match3.World
                 sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue),
                             ViewRect.ScaleFromCenter(0.65f * scale), Color.Yellow);
             }
+            else if (Bonus == BlockBonusType.HorizontalLine ||
+                     Bonus == BlockBonusType.VerticalLine)
+            {
+                sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue),
+                            ViewRect.ScaleFromCenter(0.65f * scale), Color.Purple);
+            }
 
             if (Selected)
             {
@@ -240,7 +240,7 @@ namespace Match3.World
                 moving = false;
 
                 if (movedCallback != null)
-                    movedCallback(this, originGridPosition, targetGridPosition);
+                    movedCallback(this);
             }
         }
 
@@ -301,7 +301,7 @@ namespace Match3.World
 
             if (scale > 0)
             {
-                scale -= App.DeltaTime * defaultAnimatingSpeed * 2;
+                scale -= App.DeltaTime * defaultAnimatingSpeed / 2;
             }
             else
             {

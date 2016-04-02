@@ -178,7 +178,8 @@ namespace Match3.World
             {
                 foreach (var block in GetBombBonusBlocks(bonusBlock))
                 {
-                    block.AttachAnimation(new ExplodingAnimation(animationEndedCallback));
+                    block.AttachAnimation(new ScaleDownAnimation(animationEndedCallback,
+                                                                 delay: 0.35f));
 
                     if (block.Bonus != BlockBonusType.None &&
                         block != bonusBlock)
@@ -190,7 +191,16 @@ namespace Match3.World
             {
                 foreach (var block in GetLineBonusBlocks(bonusBlock))
                 {
-                    block.AttachAnimation(new ExplodingAnimation(animationEndedCallback));
+                    var speed = 1f;
+
+                    if (bonusBlock.Bonus == BlockBonusType.HorizontalLine)
+                        speed = Math.Abs(block.X - bonusBlock.X);
+                    else
+                        speed = Math.Abs(block.Y - bonusBlock.Y);
+
+                    block.AttachAnimation(new ScaleDownAnimation(animationEndedCallback,
+                                                                 speed: speed,
+                                                                 delay: speed / 5f));
 
                     if (block.Bonus != BlockBonusType.None &&
                         block != bonusBlock)
@@ -285,7 +295,7 @@ namespace Match3.World
                 var bonusBlock = new Block(bonus.GridPosition, GridToView(bonus.GridPosition),
                                            blockSize, bonus.BlockType, bonus.BonusType);
 
-                bonusBlock.AttachAnimation(new ScaleUpAnimation(animationEnded));
+                bonusBlock.AttachAnimation(new ScaleUpAnimation(animationEnded, speed: 2f));
                 field[bonusBlock] = bonusBlock;
 
                 bonusesAdded++;

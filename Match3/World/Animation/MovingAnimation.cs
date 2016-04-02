@@ -9,21 +9,22 @@ namespace Match3.World.Animation
 {
     public class MovingAnimation : BlockAnimation
     {
-        private float speed = 5;
+        public const float DefaltSpeed = 4;
 
-        private Vector2 targetViewPosition;
         private Vector2 currentViewPosition;
+        private Vector2 targetViewPosition;
         private Point targetGridPosition;
+        private float speed;
 
         public MovingAnimation(Vector2 targetViewPosition,
                                Point targetGridPosition,
                                Action<Block> animationEndedCallback,
-                               float? speed = null)
+                               float speed = DefaltSpeed)
             : base(animationEndedCallback)
         {
             this.targetViewPosition = targetViewPosition;
             this.targetGridPosition = targetGridPosition;
-            this.speed = speed ?? this.speed;
+            this.speed = speed;
 
             this.animationEndedCallback = (block) =>
             {

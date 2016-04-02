@@ -9,6 +9,16 @@ namespace Match3.Core
 {
     public struct Rect
     {
+        public static bool operator ==(Rect rect1, Rect rect2)
+        {
+            return rect1.Equals(rect2);
+        }
+
+        public static bool operator !=(Rect rect1, Rect rect2)
+        {
+            return !rect1.Equals(rect2);
+        }
+
         public readonly Vector2 Position;
         public readonly Point Size;
 
@@ -41,6 +51,23 @@ namespace Match3.Core
                                                      (newSize.Y - Size.Y) / 2);
 
             return new Rect(newPosition, newSize);
+        }
+
+        public bool Equals(Rect rect)
+        {
+            return Position == rect.Position && Size == rect.Size;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj.GetType() == typeof(Rect))
+                return Equals((Rect)obj);
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
         }
     }
 }

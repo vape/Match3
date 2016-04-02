@@ -30,8 +30,7 @@ namespace Match3.Core
         {
             for (int i = sceneObjects.Count - 1; i >= 0; --i)
             {
-                if (sceneObjects[i].IsEnabled)
-                    sceneObjects[i].Draw(sBatch);
+                sceneObjects[i].Draw(sBatch);
             }
         }
 

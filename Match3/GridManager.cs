@@ -8,10 +8,11 @@ using MonoGame.Extended.InputListeners;
 
 using Match3.Core;
 using Match3.Utilities;
+using Match3.World;
 using Match3.World.Animation;
 
 
-namespace Match3.World
+namespace Match3
 {
     public class GridManager : GameObject
     {
@@ -24,8 +25,20 @@ namespace Match3.World
 
         private const int matchLength = 3;
 
-        private const int blockSideSize = 64;
+        private const int blockSideSize = 48;
         private const int blockGap = 4;
+
+        public bool FieldAnimating
+        {
+            get
+            {
+                return field.Animating;
+            }
+        }
+
+        public event EventHandler<ChainClearedEventArgs> ChainCleared;
+        public event EventHandler<ChainClearedEventArgs> BombCleared;
+        public event EventHandler<ChainClearedEventArgs> LineCleared;
 
         private Point blockSize;
         private Point fieldSize;
@@ -38,6 +51,8 @@ namespace Match3.World
         private MouseListener mouseListener;
         private Point mousePosition;
         private bool mouseClicked;
+
+        private int currentMultiplier;
 
         public GridManager(int width, int height)
         {
@@ -185,6 +200,8 @@ namespace Match3.World
                         block != bonusBlock)
                         ClearBonus(block, animationEndedCallback);
                 }
+
+                RaiseBombCleared();
             }
             else if (bonusBlock.Bonus == BlockBonusType.HorizontalLine ||
                      bonusBlock.Bonus == BlockBonusType.VerticalLine)
@@ -206,6 +223,8 @@ namespace Match3.World
                         block != bonusBlock)
                         ClearBonus(block, animationEndedCallback);
                 }
+
+                RaiseLineCleared();
             }
         }
 
@@ -234,6 +253,8 @@ namespace Match3.World
                     if (block.Bonus != BlockBonusType.None)
                         ClearBonus(block, animationEnded);
                 }
+
+                RaiseChainCleared(chain.Length);
             }
 
             if (chains.Count == 0)
@@ -295,7 +316,7 @@ namespace Match3.World
                 var bonusBlock = new Block(bonus.GridPosition, GridToView(bonus.GridPosition),
                                            blockSize, bonus.BlockType, bonus.BonusType);
 
-                bonusBlock.AttachAnimation(new ScaleUpAnimation(animationEnded, speed: 2f));
+                bonusBlock.AttachAnimation(new ScaleUpAnimation(animationEnded, speed: 3f));
                 field[bonusBlock] = bonusBlock;
 
                 bonusesAdded++;
@@ -345,13 +366,18 @@ namespace Match3.World
 
         private void OnSwapped(Swap swap)
         {
+            currentMultiplier = 1;
+
             Clear();
         }
 
         private void OnCleared(int chainsCleared)
         {
             if (chainsCleared != 0)
+            {
+                currentMultiplier++;
                 FillGaps();
+            }
         }
 
         private void OnGapsFilled(int blocksMoved, int bonusesAdded)
@@ -498,6 +524,21 @@ namespace Match3.World
         #endregion
 
         #region Events
+
+        private void RaiseLineCleared()
+        {
+            LineCleared?.Invoke(this, new ChainClearedEventArgs(8, currentMultiplier));
+        }
+
+        private void RaiseBombCleared()
+        {
+            BombCleared?.Invoke(this, new ChainClearedEventArgs(9, currentMultiplier));
+        }
+
+        private void RaiseChainCleared(int chainLength)
+        {
+            ChainCleared?.Invoke(this, new ChainClearedEventArgs(chainLength, currentMultiplier));
+        }
 
         private void MouseDownHandler(object sender, MouseEventArgs e)
         {

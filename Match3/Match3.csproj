@@ -42,12 +42,16 @@
     <Compile Include="Core\AppObject.cs" />
     <Compile Include="Core\GameObject.cs" />
     <Compile Include="Core\Rect.cs" />
+    <Compile Include="GameManager.cs" />
+    <Compile Include="GameScreen.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\Scene.cs" />
     <Compile Include="Scenes\GameScene.cs" />
     <Compile Include="Scenes\MenuScene.cs" />
+    <Compile Include="UIManager.cs" />
     <Compile Include="Utilities\Utils.cs" />
+    <Compile Include="Utilities\Utils.Graphics.cs" />
     <Compile Include="World\Animation\ScaleUpAnimation.cs" />
     <Compile Include="World\Animation\BlockAnimation.cs" />
     <Compile Include="World\Animation\ScaleDownAnimation.cs" />
@@ -55,9 +59,10 @@
     <Compile Include="World\BlockBonusType.cs" />
     <Compile Include="World\BlockType.cs" />
     <Compile Include="World\Chain.cs" />
+    <Compile Include="World\ChainClearedEventArgs.cs" />
     <Compile Include="World\ChainType.cs" />
     <Compile Include="World\BlockField.cs" />
-    <Compile Include="World\GridManager.cs" />
+    <Compile Include="GridManager.cs" />
     <Compile Include="World\Block.cs" />
     <Compile Include="World\Swap.cs" />
   </ItemGroup>

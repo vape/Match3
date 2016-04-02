@@ -9,21 +9,13 @@ using Microsoft.Xna.Framework.Graphics;
 using Match3.Utilities;
 using Match3.Core;
 using System.Diagnostics;
+using Match3.World.Animation;
 
 namespace Match3.World
 {
     public class Block
     {
-        private enum AnimationType
-        {
-            None,
-            Appearing,
-            Disappearing,
-            Exploding
-        }
-
         private const float defaultMovingSpeed = 500;
-        private const float defaultAnimatingSpeed = 10f;
 
         public static BlockType GetRandomBlockType()
         {
@@ -80,7 +72,7 @@ namespace Match3.World
         {
             get
             {
-                return animation != AnimationType.None;
+                return animation != null && animation.Animating;
             }
         }
 
@@ -104,7 +96,8 @@ namespace Match3.World
         { get; set; }
 
         private bool moving;
-        private AnimationType animation;
+        private Rect drawRect;
+        private BlockAnimation animation;
 
         // Moving
         private Action<Block> movedCallback;
@@ -112,18 +105,6 @@ namespace Match3.World
         private Point targetGridPosition;
         private Point originGridPosition;
         private float movingSpeed;
-
-        // Appearing / Disappearing animation
-        private Action<Block> appearedCallback;
-        private Action<Block> disappearedCallback;
-
-        // Exploding animation
-        private Action<Block> explodedCallback;
-        private float explodingStartTime;
-        private float explodingDelay;
-
-        private float alpha;
-        private float scale;
 
         public Block(Point gridPosition, Vector2 viewPosition, Point viewSize,
                      BlockType? blockType = null, BlockBonusType? blockBonus = null)
@@ -136,9 +117,6 @@ namespace Match3.World
 
             Texture = GetTexture(Type);
             Color = Color.White;
-
-            alpha = 1;
-            scale = 1;
         }
 
         public void MoveTo(Vector2 targetViewPosition, Point targetGridPosition,
@@ -167,60 +145,61 @@ namespace Match3.World
                    setGridPositionImmediately, speed);
         }
 
-        public void AnimateExploding(Action<Block> explodedCallback = null)
+        public void AttachAnimation(BlockAnimation animation)
         {
-            animation = AnimationType.Exploding;
+            if (this.animation != null)
+                this.animation.Stop();
 
-            explodingStartTime = App.Time;
-            scale = 1;
-            explodingDelay = ((float)Utils.GetRand(350, 600) / 1000);
-
-            this.explodedCallback = explodedCallback;
+            this.animation = animation;
+            this.animation.Load(this);
         }
 
-        public void AnimateAppearing(Action<Block> appearedCallback = null)
+        public void Update()
         {
-            animation = AnimationType.Appearing;
+            if (moving)
+                UpdateMoving();
 
-            alpha = 0;
-            scale = 0;
+            if (IsAnimating)
+            {
+                drawRect = animation.Update(ViewRect);
+            }
+            else
+            {
+                if (drawRect != ViewRect)
+                    drawRect = ViewRect;
 
-            this.appearedCallback = appearedCallback;
-        }
-
-        public void AnimateDisappearing(Action<Block> disappearedCallback = null)
-        {
-            animation = AnimationType.Disappearing;
-
-            scale = 1;
-
-            this.disappearedCallback = disappearedCallback;
+                if (animation != null)
+                {
+                    animation.Stop();
+                    animation = null;
+                }
+            }
         }
 
         public void Draw(SpriteBatch sBatch)
         {
-            sBatch.Draw(Texture, ViewRect.ScaleFromCenter(scale), Color);
+            sBatch.Draw(Texture, drawRect, Color);
 
             if (Bonus == BlockBonusType.Bomb)
             {
                 sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue),
-                            ViewRect.ScaleFromCenter(0.65f * scale), Color.Yellow);
+                            drawRect.ScaleFromCenter(0.65f), Color.Yellow);
             }
             else if (Bonus == BlockBonusType.HorizontalLine ||
                      Bonus == BlockBonusType.VerticalLine)
             {
                 sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue),
-                            ViewRect.ScaleFromCenter(0.65f * scale), Color.Purple);
+                            drawRect.ScaleFromCenter(0.65f), Color.Purple);
             }
 
             if (Selected)
             {
                 sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue), 
-                            ViewRect.ScaleFromCenter(0.5f));
+                            drawRect.ScaleFromCenter(0.35f));
             }
         }
 
-        public void UpdateMoving()
+        private void UpdateMoving()
         {
             var direction = targetViewPosition - ViewRect.Position;
             var distanceToTarget = direction.Length();
@@ -241,75 +220,6 @@ namespace Match3.World
 
                 if (movedCallback != null)
                     movedCallback(this);
-            }
-        }
-
-        public void UpdateAnimation()
-        {
-            switch (animation)
-            {
-                case AnimationType.Appearing:
-                    UpdateAppearing();
-                    break;
-                case AnimationType.Disappearing:
-                    UpdateDisappearing();
-                    break;
-                case AnimationType.Exploding:
-                    UpdateExploding();
-                    break;
-            }
-        }
-
-        private void UpdateAppearing()
-        {
-            if (alpha < 1 && scale < 1)
-            {
-                alpha += App.DeltaTime * defaultAnimatingSpeed;
-                scale += App.DeltaTime * defaultAnimatingSpeed;
-            }
-            else
-            {
-                animation = AnimationType.None;
-                alpha = 1;
-                scale = 1;
-
-                if (appearedCallback != null)
-                    appearedCallback(this);
-            }
-        }
-
-        private void UpdateDisappearing()
-        {
-            if (scale > 0)
-            {
-                scale -= App.DeltaTime * defaultAnimatingSpeed;
-            }
-            else
-            {
-                animation = AnimationType.None;
-                scale = 0;
-
-                if (disappearedCallback != null)
-                    disappearedCallback(this);
-            }
-        }
-
-        private void UpdateExploding()
-        {
-            if (App.Time - explodingStartTime < explodingDelay)
-                return;
-
-            if (scale > 0)
-            {
-                scale -= App.DeltaTime * defaultAnimatingSpeed / 2;
-            }
-            else
-            {
-                animation = AnimationType.None;
-                scale = 0;
-
-                if (explodedCallback != null)
-                    explodedCallback(this);
             }
         }
     }

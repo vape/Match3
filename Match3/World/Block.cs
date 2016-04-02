@@ -123,7 +123,7 @@ namespace Match3.World
 
         public void Draw(SpriteBatch sBatch)
         {
-            sBatch.Draw(Texture, drawRect, new Color(Color, 0.75f));
+            sBatch.Draw(Texture, drawRect, Color);
 
             if (Bonus == BlockBonusType.Bomb)
             {

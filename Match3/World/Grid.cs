@@ -353,7 +353,7 @@ namespace Match3.World
 
         private void OnSwapped(Swap swap)
         {
-            TryPlaceLineBonus(swap);
+            PlaceLineBonuses(swap);
 
             Clear();
         }
@@ -384,43 +384,54 @@ namespace Match3.World
 
         #region Utils
 
-        private void TryPlaceLineBonus(Swap swap)
+        private void PlaceLineBonuses(Swap swap)
         {
-            BlockBonusType bonusType = BlockBonusType.None;
-            Block lineBonusBlock = null;
+            var horizontalChainLength = Chain.GetHorizontalChainLength(field, swap.To);
+            var verticalChainLength = Chain.GetVerticalChainLength(field, swap.To);
 
-            if (Chain.GetHorizontalChainLength(field, swap.To) >= 4)
+            if (horizontalChainLength >= 4 || 
+                verticalChainLength >= 4)
             {
-                lineBonusBlock = swap.To;
-                bonusType = BlockBonusType.HorizontalLine;
-            }
-            else if (Chain.GetVerticalChainLength(field, swap.To) >= 4)
-            {
-                lineBonusBlock = swap.To;
-                bonusType = BlockBonusType.VerticalLine;
-            }
-            else if (Chain.GetHorizontalChainLength(field, swap.From) >= 4)
-            {
-                lineBonusBlock = swap.From;
-                bonusType = BlockBonusType.HorizontalLine;
-            }
-            else if (Chain.GetVerticalChainLength(field, swap.From) >= 4)
-            {
-                lineBonusBlock = swap.From;
-                bonusType = BlockBonusType.VerticalLine;
-            }
+                BlockBonusType bonusType = BlockBonusType.None;
 
-            if (lineBonusBlock != null)
-            {
+                if (horizontalChainLength >= 4)
+                    bonusType = BlockBonusType.HorizontalLine;
+                else
+                    bonusType = BlockBonusType.VerticalLine;
+
                 var bonus = new BonusInfo()
                 {
-                    BlockType = lineBonusBlock.Type,
+                    BlockType = swap.To.Type,
                     BonusType = bonusType,
-                    GridPosition = lineBonusBlock.GridPosition
+                    GridPosition = swap.To.GridPosition
                 };
 
                 bonuses.Add(bonus);
             }
+
+            horizontalChainLength = Chain.GetHorizontalChainLength(field, swap.From);
+            verticalChainLength = Chain.GetVerticalChainLength(field, swap.From);
+
+            if (horizontalChainLength >= 4 ||
+                verticalChainLength >= 4)
+            {
+                BlockBonusType bonusType = BlockBonusType.None;
+
+                if (horizontalChainLength >= 4)
+                    bonusType = BlockBonusType.HorizontalLine;
+                else
+                    bonusType = BlockBonusType.VerticalLine;
+
+                var bonus = new BonusInfo()
+                {
+                    BlockType = swap.From.Type,
+                    BonusType = bonusType,
+                    GridPosition = swap.From.GridPosition
+                };
+
+                bonuses.Add(bonus);
+            }
+
         }
 
         private bool IsValidSwap(Swap swap)

@@ -7,7 +7,7 @@ namespace Match3.World.Animation
 {
     public class ScaleDownAnimation : BlockAnimation
     {
-        private float speed = 1;
+        private float speed = 4f;
         private float scale = 1;
 
         public ScaleDownAnimation(Action<Block> animationEndedCallback)

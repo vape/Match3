@@ -17,11 +17,13 @@ namespace Match3.World.Animation
 
         public MovingAnimation(Vector2 targetViewPosition,
                                Point targetGridPosition,
-                               Action<Block> animationEndedCallback)
+                               Action<Block> animationEndedCallback,
+                               float? speed = null)
             : base(animationEndedCallback)
         {
             this.targetViewPosition = targetViewPosition;
             this.targetGridPosition = targetGridPosition;
+            this.speed = speed ?? this.speed;
 
             this.animationEndedCallback = (block) =>
             {

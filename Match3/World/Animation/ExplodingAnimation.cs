@@ -7,7 +7,7 @@ namespace Match3.World.Animation
 {
     public class ExplodingAnimation : BlockAnimation
     {
-        private float speed = 1f;
+        private float speed = 4f;
         private float scale = 1;
         private float delay = 0;
 

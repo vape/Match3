@@ -250,14 +250,12 @@ namespace Match3.World
                     {
                         var gridPosition = new Point(x, y);
                         var viewPosition = GridToView(gridPosition);
+                        var speed = 2 * (y + 3);
 
-                        /* Falling animation. Looks a bit ugly
                         var block = new Block(gridPosition, viewPosition - new Vector2(0, 200), blockSize);
-                        block.AttachAnimation(new MovingAnimation(viewPosition, gridPosition, animationEnded));
-                        */
+                        block.AttachAnimation(new MovingAnimation(viewPosition, gridPosition, 
+                                                                  animationEnded, speed));
 
-                        var block = new Block(gridPosition, viewPosition, blockSize);
-                        block.AttachAnimation(new ScaleUpAnimation(animationEnded));
 
                         field[y, x] = block;
                         blocksCreated++;
@@ -309,10 +307,12 @@ namespace Match3.World
                             {
                                 var gridPosition = new Point(x, y - offset);
                                 var viewPosition = GridToView(x, y - offset);
+                                var speed = ((y - offset) + 3);
 
                                 field[i, x].AttachAnimation(new MovingAnimation(viewPosition, 
                                                                                 gridPosition, 
-                                                                                animationEnded));
+                                                                                animationEnded,
+                                                                                speed));
                                 field[i, x].GridPosition = gridPosition;
                                 field[y - offset, x] = field[i, x];
                                 field[i, x] = null;

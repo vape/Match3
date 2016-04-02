@@ -84,6 +84,7 @@ namespace Match3.World
             GridPosition = gridPosition;
             ViewRect = new Rect(viewPosition, viewSize);
 
+            drawRect = ViewRect;
             texture = GetTexture(Type);
             color = Color.White;
         }
@@ -120,6 +121,7 @@ namespace Match3.World
             // TODO: Get rid of this
             if (Bonus == BlockBonusType.Bomb)
             {
+                sBatch.DrawRect(drawRect.ToMonogameRectangle(), color);
                 sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue),
                             drawRect.ScaleFromCenter(0.65f), Color.Yellow);
             }

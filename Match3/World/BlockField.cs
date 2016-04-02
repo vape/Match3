@@ -49,16 +49,6 @@ namespace Match3.World
             Height = blocks.GetLength(0);
         }
 
-        public bool AnyBlocksActive()
-        {
-            return blocks.Any((block) => block != null && !block.IsStill);
-        }
-
-        public bool AnyBlocksMoving()
-        {
-            return blocks.Any((block) => block != null && block.IsMoving);
-        }
-
         public bool AnyBlocksAnimating()
         {
             return blocks.Any((block) => block != null && block.IsAnimating);

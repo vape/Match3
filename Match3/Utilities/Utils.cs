@@ -22,7 +22,7 @@ namespace Match3.Utilities
 
         public static bool Usable(this Block block)
         {
-            return block != null && block.IsStill;
+            return block != null && !block.IsAnimating;
         }
 
         public static bool Any<T>(this T[,] array, Predicate<T> predicate)

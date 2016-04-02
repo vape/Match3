@@ -52,22 +52,6 @@ namespace Match3.World
             return Utils.GetSolidRectangleTexture(64, 64, color);
         }
 
-        public bool IsStill
-        {
-            get
-            {
-                return !IsMoving && !IsAnimating;
-            }
-        }
-
-        public bool IsMoving
-        {
-            get
-            {
-                return moving;
-            }
-        }
-
         public bool IsAnimating
         {
             get
@@ -99,13 +83,6 @@ namespace Match3.World
         private Rect drawRect;
         private BlockAnimation animation;
 
-        // Moving
-        private Action<Block> movedCallback;
-        private Vector2 targetViewPosition;
-        private Point targetGridPosition;
-        private Point originGridPosition;
-        private float movingSpeed;
-
         public Block(Point gridPosition, Vector2 viewPosition, Point viewSize,
                      BlockType? blockType = null, BlockBonusType? blockBonus = null)
         {
@@ -119,32 +96,6 @@ namespace Match3.World
             Color = Color.White;
         }
 
-        public void MoveTo(Vector2 targetViewPosition, Point targetGridPosition,
-                           Action<Block> movedCallback = null,
-                           bool setGridPositionImmediately = false,
-                           float speed = defaultMovingSpeed)
-        {
-            this.originGridPosition = GridPosition;
-            this.targetViewPosition = targetViewPosition;
-            this.targetGridPosition = targetGridPosition;
-            this.movedCallback = movedCallback;
-
-            movingSpeed = speed;
-            moving = true;
-
-            if (setGridPositionImmediately)
-                GridPosition = targetGridPosition;
-        }
-
-        public void MoveTo(Block block, 
-                           Action<Block> movedCallback = null,
-                           bool setGridPositionImmediately = false,
-                           float speed = defaultMovingSpeed)
-        {
-            MoveTo(block.ViewRect.Position, block.GridPosition, movedCallback, 
-                   setGridPositionImmediately, speed);
-        }
-
         public void AttachAnimation(BlockAnimation animation)
         {
             if (IsAnimating)
@@ -154,19 +105,8 @@ namespace Match3.World
             this.animation.Load(this);
         }
 
-        public void RemoveAnimation()
-        {
-            if (animation == null)
-                return;
-
-            animation = null;
-        }
-
         public void Update()
         {
-            if (moving)
-                UpdateMoving();
-
             if (IsAnimating)
             {
                 drawRect = animation.Update(ViewRect);
@@ -201,30 +141,6 @@ namespace Match3.World
             {
                 sBatch.Draw(Utils.GetSolidRectangleTexture(1, 1, Color.AliceBlue), 
                             drawRect.ScaleFromCenter(0.35f));
-            }
-        }
-
-        private void UpdateMoving()
-        {
-            var direction = targetViewPosition - ViewRect.Position;
-            var distanceToTarget = direction.Length();
-            var moveDistance = movingSpeed * App.DeltaTime;
-
-            if (moveDistance > distanceToTarget)
-                moveDistance = distanceToTarget;
-
-            var newPosition = Vector2.Add(Vector2.Normalize(direction) * moveDistance, 
-                                          ViewRect.Position);
-
-            ViewRect = new Rect(newPosition, ViewRect.Size);
-
-            if (ViewRect.Position == targetViewPosition)
-            {
-                GridPosition = targetGridPosition;
-                moving = false;
-
-                if (movedCallback != null)
-                    movedCallback(this);
             }
         }
     }

@@ -215,7 +215,7 @@ namespace Match3.World
             {
                 field[block] = null;
 
-                if (field.AnyBlocksActive())
+                if (field.AnyBlocksAnimating())
                     return;
 
                 OnCleared(chains.Count);
@@ -256,7 +256,7 @@ namespace Match3.World
 
             Action<Block> onBlockAppeared = (block) =>
             {
-                if (field.AnyBlocksActive())
+                if (field.AnyBlocksAnimating())
                     return;
 
                 OnRefilled(blocksCreated);
@@ -290,7 +290,7 @@ namespace Match3.World
 
             Action<Block> onBlockMoved = (block) =>
             {
-                if (field.AnyBlocksActive())
+                if (field.AnyBlocksAnimating())
                     return;
 
                 OnGapsFilled(blocksMoved, bonusesAdded);

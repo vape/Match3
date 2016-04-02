@@ -94,8 +94,6 @@ namespace Match3.World
 
             From.AttachAnimation(new MovingAnimation(To.ViewRect.Position, To.GridPosition, onMoved));
             To.AttachAnimation(new MovingAnimation(From.ViewRect.Position, From.GridPosition, onMoved));
-            // From.MoveTo(To, movedCallback: onMoved);
-            // To.MoveTo(From, movedCallback: onMoved);
         }
 
         private bool CheckSwap()

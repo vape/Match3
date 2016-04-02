@@ -9,11 +9,7 @@ namespace Match3.World.Animation
 {
     public class AppearingAnimation : BlockAnimation
     {
-        private const float scaleSpeed = 5;
-
-        public override bool Animating
-        { get { return scale < 1; } }
-
+        private float speed = 1;
         private float scale = 0;
 
         public AppearingAnimation(Action<Block> animationEndCallback)
@@ -22,7 +18,10 @@ namespace Match3.World.Animation
 
         protected override Rect OnAnimationUpdate(Rect viewRect)
         {
-            scale += App.DeltaTime * scaleSpeed;
+            scale += App.DeltaTime * speed;
+
+            if (scale >= 1)
+                Animating = false;
 
             return viewRect.ScaleFromCenter(scale);
         }

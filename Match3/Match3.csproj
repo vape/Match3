@@ -52,6 +52,7 @@
     <Compile Include="World\Animation\BlockAnimation.cs" />
     <Compile Include="World\Animation\DisappearingAnimation.cs" />
     <Compile Include="World\Animation\ExplodingAnimation.cs" />
+    <Compile Include="World\Animation\MovingAnimation.cs" />
     <Compile Include="World\BlockBonusType.cs" />
     <Compile Include="World\BlockType.cs" />
     <Compile Include="World\Chain.cs" />

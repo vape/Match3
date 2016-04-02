@@ -91,7 +91,7 @@ namespace Match3.World
         public Point GridPosition
         { get; set; }
         public Rect ViewRect
-        { get; private set; }
+        { get; set; }
         public bool Selected
         { get; set; }
 
@@ -147,11 +147,19 @@ namespace Match3.World
 
         public void AttachAnimation(BlockAnimation animation)
         {
-            if (this.animation != null)
-                this.animation.Stop();
+            if (IsAnimating)
+                return;
 
             this.animation = animation;
             this.animation.Load(this);
+        }
+
+        public void RemoveAnimation()
+        {
+            if (animation == null)
+                return;
+
+            animation = null;
         }
 
         public void Update()
@@ -162,23 +170,20 @@ namespace Match3.World
             if (IsAnimating)
             {
                 drawRect = animation.Update(ViewRect);
+
+                if (!animation.Animating)
+                    animation.Stop();
             }
             else
             {
                 if (drawRect != ViewRect)
                     drawRect = ViewRect;
-
-                if (animation != null)
-                {
-                    animation.Stop();
-                    animation = null;
-                }
             }
         }
 
         public void Draw(SpriteBatch sBatch)
         {
-            sBatch.Draw(Texture, drawRect, Color);
+            sBatch.Draw(Texture, drawRect, new Color(Color, 0.75f));
 
             if (Bonus == BlockBonusType.Bomb)
             {

@@ -9,11 +9,7 @@ namespace Match3.World.Animation
 {
     public class ExplodingAnimation : BlockAnimation
     {
-        private const float scaleSpeed = 10;
-
-        public override bool Animating
-        { get { return scale > 0; } }
-
+        private float speed = 1f;
         private float scale = 1;
         private float delay = 0;
 
@@ -29,7 +25,10 @@ namespace Match3.World.Animation
             if (App.Time - loadedTime < delay)
                 return viewRect;
 
-            scale -= App.DeltaTime * scaleSpeed;
+            scale -= App.DeltaTime * speed;
+
+            if (scale <= 0)
+                Animating = false;
 
             return viewRect.ScaleFromCenter(scale);
         }

@@ -20,8 +20,8 @@ namespace Match3.World
                 for (int x = 0; x < field.Width; ++x)
                 {
                     var block = field[lineBlock.Y, x];
-                    if (block.Usable() &&
-                        block.GridPosition != lineBlock.GridPosition)
+                    if (block.Usable()/* &&
+                        block.GridPosition != lineBlock.GridPosition*/)
 
                         chainBlocks.Add(block);
                 }
@@ -30,10 +30,7 @@ namespace Match3.World
             {
                 for (int y = 0; y < field.Height; ++y)
                 {
-                    var block = field[y, lineBlock.X];
-                    if (block.Usable() &&
-                        block.GridPosition != lineBlock.GridPosition)
-
+                    if (field[y, lineBlock.X].Usable())
                         chainBlocks.Add(field[y, lineBlock.X]);
                 }
             }
@@ -49,12 +46,11 @@ namespace Match3.World
             {
                 for (int x = -1; x <= 1; ++x)
                 {
-                    var block = field[bombBlock.Y + y, bombBlock.X + x];
                     if (bombBlock.X + x >= 0 && bombBlock.Y + y >= 0 &&
                         bombBlock.X + x < field.Width && bombBlock.Y + y < field.Height &&
-                        block.Usable() && block.GridPosition != bombBlock.GridPosition)
+                        field[bombBlock.Y + y, bombBlock.X + x].Usable())
 
-                        chainBlocks.Add(block);
+                        chainBlocks.Add(field[bombBlock.Y + y, bombBlock.X + x]);
                 }
             }
 
@@ -239,6 +235,8 @@ namespace Match3.World
             Blocks = blocks.ToList();
             BlockType = Blocks[0].Type;
             ChainType = type;
+
+            Debug.Assert(Blocks.Count > 2);
 
             if (type == ChainType.Intersection)
             {

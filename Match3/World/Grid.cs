@@ -186,7 +186,8 @@ namespace Match3.World
                 {
                     bombBlocks.AttachAnimation(new ExplodingAnimation(callback));
 
-                    if (bombBlocks.Bonus != BlockBonusType.None)
+                    if (bombBlocks.Bonus != BlockBonusType.None &&
+                        bombBlocks != block)
                         ClearBonus(bombBlocks, callback);
                 }
             }
@@ -195,11 +196,10 @@ namespace Match3.World
             {
                 foreach (var lineBlock in Chain.GetLineBlocks(field, block))
                 {
-                    // TODO: Set animation delay according to distance from block to lineBlock
+                    lineBlock.AttachAnimation(new ExplodingAnimation(callback));
 
-                    lineBlock.AttachAnimation(new DisappearingAnimation(callback));
-
-                    if (lineBlock.Bonus != BlockBonusType.None)
+                    if (lineBlock.Bonus != BlockBonusType.None &&
+                        lineBlock != block)
                         ClearBonus(lineBlock, callback);
                 }
             }
@@ -207,7 +207,9 @@ namespace Match3.World
 
         private void Clear()
         {
-            var chainsRemoved = 0;
+            Debug.WriteLine("Clear called");
+
+            var chains = Chain.FindChains(field, matchLength);
 
             Action<Block> onBlockDisappeared = (block) =>
             {
@@ -216,10 +218,10 @@ namespace Match3.World
                 if (field.AnyBlocksActive())
                     return;
 
-                OnCleared(chainsRemoved);
+                OnCleared(chains.Count);
             };
 
-            foreach (var chain in Chain.FindChains(field, matchLength))
+            foreach (var chain in chains)
             {
                 if (chain.ChainType == ChainType.Intersection)
                 {
@@ -233,30 +235,28 @@ namespace Match3.World
                     bonuses.Add(bombBonus);
                 }
 
-                Debug.Assert(chain.Blocks.Count >= 3);
-
                 foreach (var block in chain.Blocks)
                 {
-                    if (block.Bonus != BlockBonusType.None)
-                        ClearBonus(block, onBlockDisappeared);
-
                     block.AttachAnimation(new DisappearingAnimation(onBlockDisappeared));
-                }
 
-                chainsRemoved++;
+                    if (block.Bonus != BlockBonusType.None)
+                        ClearBonus(block, onBlockDisappeared);                    
+                }
             }
 
-            if(chainsRemoved == 0)
+            if(chains.Count == 0)
                 OnCleared(0);
         }
 
         private void Refill()
         {
+            Debug.WriteLine("Refil called");
+
             int blocksCreated = 0;
 
             Action<Block> onBlockAppeared = (block) =>
             {
-                if (field.AnyBlocksAnimating())
+                if (field.AnyBlocksActive())
                     return;
 
                 OnRefilled(blocksCreated);
@@ -283,15 +283,17 @@ namespace Match3.World
 
         private void FillGaps()
         {
+            Debug.WriteLine("Fill gaps called");
+
             int blocksMoved = 0;
+            int bonusesAdded = 0;
 
             Action<Block> onBlockMoved = (block) =>
             {
-                // TODO: Create moving animation
                 if (field.AnyBlocksActive())
                     return;
 
-                OnGapsFilled(blocksMoved);
+                OnGapsFilled(blocksMoved, bonusesAdded);
             };
 
             foreach (var bonus in bonuses)
@@ -302,14 +304,11 @@ namespace Match3.World
 
                 bonusBlock.AttachAnimation(new AppearingAnimation(onBlockMoved));
                 field[bonusBlock] = bonusBlock;
+
+                bonusesAdded++;
             }
 
-            if (bonuses.Count > 0)
-            {
-                blocksMoved++;
-                bonuses.Clear();
-                return;
-            }
+            bonuses.Clear();
 
             for (int y = fieldSize.Y - 1; y >= 0; --y)
             {
@@ -323,10 +322,19 @@ namespace Match3.World
                         {
                             if (field[i, x].Usable())
                             {
+                                /*
                                 field[i, x].MoveTo(GridToScreen(x, y - offset),
                                                    new Point(x, y - offset), 
                                                    setGridPositionImmediately:true,
                                                    movedCallback: onBlockMoved);
+                                field.Move(x, i, x, y - offset);
+                                */
+                                var targetPosition = GridToScreen(x, y - offset);
+                                var gridPosition = new Point(x, y - offset);
+
+                                field[i, x].AttachAnimation(new MovingAnimation(targetPosition,
+                                    gridPosition, onBlockMoved));
+                                field[i, x].GridPosition = gridPosition;
                                 field.Move(x, i, x, y - offset);
 
                                 blocksMoved++;
@@ -337,8 +345,8 @@ namespace Match3.World
                 }
             }
 
-            if (blocksMoved == 0)
-                OnGapsFilled(0);
+            if (blocksMoved == 0 && bonusesAdded == 0)
+                OnGapsFilled(0, 0);
         }
 
         #region Main
@@ -346,20 +354,19 @@ namespace Match3.World
         private void OnSwapped(Swap swap)
         {
             TryPlaceLineBonus(swap);
+
             Clear();
         }
 
         private void OnCleared(int chainsCleared)
         {
-            FillGaps();
+            if (chainsCleared != 0)
+                FillGaps();
         }
 
-        private void OnGapsFilled(int blocksMoved)
+        private void OnGapsFilled(int blocksMoved, int bonusesAdded)
         {
-            if (blocksMoved != 0)
-                Clear();
-            else
-                Refill();
+            Refill();
         }
 
         private void OnRefilled(int blocksCreated)

@@ -1,4 +1,5 @@
 ﻿using Match3.Utilities;
+using Match3.World.Animation;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
@@ -84,15 +85,17 @@ namespace Match3.World
 
             Action<Block> onMoved = (block) =>
             {
-                if (From.IsMoving || To.IsMoving)
+                if (From.IsAnimating || To.IsAnimating)
                     return;
 
                 if (swappedCallback != null)
                     swappedCallback(this);
             };
 
-            From.MoveTo(To, movedCallback: onMoved);
-            To.MoveTo(From, movedCallback: onMoved);
+            From.AttachAnimation(new MovingAnimation(To.ViewRect.Position, To.GridPosition, onMoved));
+            To.AttachAnimation(new MovingAnimation(From.ViewRect.Position, From.GridPosition, onMoved));
+            // From.MoveTo(To, movedCallback: onMoved);
+            // To.MoveTo(From, movedCallback: onMoved);
         }
 
         private bool CheckSwap()

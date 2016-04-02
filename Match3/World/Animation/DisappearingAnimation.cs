@@ -9,11 +9,7 @@ namespace Match3.World.Animation
 {
     public class DisappearingAnimation : BlockAnimation
     {
-        private const float scaleSpeed = 1f;
-
-        public override bool Animating
-        { get { return scale > 0; } }
-
+        private float speed = 1;
         private float scale = 1;
 
         public DisappearingAnimation(Action<Block> animationEndCallback)
@@ -22,7 +18,10 @@ namespace Match3.World.Animation
 
         protected override Rect OnAnimationUpdate(Rect viewRect)
         {
-            scale -= App.DeltaTime * scaleSpeed;
+            scale -= App.DeltaTime * speed;
+
+            if (scale <= 0)
+                Animating = false;
 
             return viewRect.ScaleFromCenter(scale);
         }

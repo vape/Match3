@@ -11,12 +11,11 @@ namespace Match3.World.Animation
     {
         public Block Block
         { get; private set; }
-        public abstract bool Animating
-        { get; }
+        public bool Animating
+        { get; protected set; }
 
         protected float loadedTime;
-
-        private Action<Block> animationEndCallback;
+        protected Action<Block> animationEndCallback;
 
         public BlockAnimation(Action<Block> animationEndCallback)
         {
@@ -27,6 +26,7 @@ namespace Match3.World.Animation
         {
             Block = block;
             loadedTime = App.Time;
+            Animating = true;
 
             OnAnimationLoad();
         }
@@ -41,6 +41,8 @@ namespace Match3.World.Animation
 
         public void Stop()
         {
+            Animating = false;
+
             if (animationEndCallback != null)
             {
                 animationEndCallback(Block);

@@ -333,7 +333,7 @@ namespace Match3
 
                         for (int i = y; i >= 0; --i)
                         {
-                            if (field[i, x].Usable())
+                            if (field[i, x].Usable() && field[y - offset, x] == null)
                             {
                                 var gridPosition = new Point(x, y - offset);
                                 var viewPosition = GridToView(x, y - offset);

@@ -1,5 +1,7 @@
 ﻿using System;
 
+using Microsoft.Xna.Framework.Audio;
+
 using Match3.Core;
 using Match3.Scenes;
 using Match3.World;
@@ -19,6 +21,7 @@ namespace Match3
         private GridManager gridManager;
         private UIManager uiManager;
 
+        private SoundEffect chainClearedSound;
         private float endTime;
         private bool noTimeLeft;
 
@@ -36,6 +39,7 @@ namespace Match3
             App.Scene.AddToScene(uiManager);
             App.Scene.AddToScene(gridManager);
 
+            chainClearedSound = App.LoadContent<SoundEffect>("Sound/ChainCleared");
             endTime = App.Time + LevelTime;
         }
 
@@ -57,6 +61,7 @@ namespace Match3
         {
             Score += score * multiplier;
             uiManager.AddScore(score, multiplier);
+            chainClearedSound.Play(1, multiplier / 5f, 0);
         }
 
         #region Events

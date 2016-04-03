@@ -59,9 +59,11 @@ namespace Match3
 
         private void AddScore(int score, int multiplier)
         {
+            var pitch = multiplier/5f;
+
             Score += score * multiplier;
             uiManager.AddScore(score, multiplier);
-            chainClearedSound.Play(1, multiplier / 5f, 0);
+            chainClearedSound.Play(1, pitch > 1 ? 1 : pitch, 0);
         }
 
         #region Events

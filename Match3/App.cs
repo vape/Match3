@@ -12,7 +12,7 @@ namespace Match3
 {
     public class App : Game
     {
-        public const int TargetFPS = 60;
+        public const int TargetFps = 60;
 
         public const int WindowWitdh = 1024;
         public const int WindowHeight = 640;
@@ -33,20 +33,8 @@ namespace Match3
         public static float Time
         { get; private set; }
 
-        public static GraphicsDevice Graphics
-        {
-            get
-            {
-                return instance.GraphicsDevice;
-            }
-        }
-        public static Viewport Viewport
-        {
-            get
-            {
-                return instance.GraphicsDevice.Viewport;
-            }
-        }
+        public static GraphicsDevice Graphics => instance.GraphicsDevice;
+        public static Viewport Viewport => instance.GraphicsDevice.Viewport;
 
         private static App instance;
 
@@ -65,9 +53,8 @@ namespace Match3
             instance.exitRequested = true;
         }
 
-        Texture2D background;
-        GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch;
+        private Texture2D background;
+        private SpriteBatch spriteBatch;
 
         private Scene currentScene;
         private Scene nextScene;
@@ -76,7 +63,7 @@ namespace Match3
 
         public App()
         {
-            graphics = new GraphicsDeviceManager(this);
+            var graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
 
             graphics.PreferredBackBufferWidth = WindowWitdh;
@@ -88,7 +75,7 @@ namespace Match3
         protected override void Initialize()
         {
             IsMouseVisible = true;
-            TargetElapsedTime = TimeSpan.FromSeconds(1f / TargetFPS);
+            TargetElapsedTime = TimeSpan.FromSeconds(1f / TargetFps);
             InputListener = new InputListenerManager();
 
             SetNextScene(new MenuScene());
@@ -110,8 +97,7 @@ namespace Match3
 
             if (nextScene != null)
             {
-                if (currentScene != null)
-                    currentScene.Destroy(true);
+                currentScene?.Destroy(true);
 
                 currentScene = nextScene;
                 currentScene.Load();
@@ -124,8 +110,7 @@ namespace Match3
 
             InputListener.Update(gameTime);
 
-            if (currentScene != null)
-                currentScene.Update();
+            currentScene?.Update();
 
             base.Update(gameTime);
         }
@@ -137,8 +122,7 @@ namespace Match3
             spriteBatch.Begin();
             spriteBatch.Draw(background, Viewport.Bounds, Color.White);
 
-            if (currentScene != null)
-                currentScene.Draw(spriteBatch);
+            currentScene?.Draw(spriteBatch);
 
             spriteBatch.End();
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using Microsoft.Xna.Framework.Graphics;
 
@@ -8,7 +9,7 @@ namespace Match3.Core
 {
     public abstract class Scene : AppObject
     {
-        private List<GameObject> sceneObjects = new List<GameObject>();
+        private readonly List<GameObject> sceneObjects = new List<GameObject>();
 
         protected override void OnUpdate()
         {
@@ -41,18 +42,12 @@ namespace Match3.Core
 
         public IEnumerable<T> GetSceneObjects<T>() where T: GameObject
         {
-            for (int i = 0; i < sceneObjects.Count; ++i)
-            {
-                T gameObject = sceneObjects[i] as T;
-                if (gameObject != null)
-                    yield return gameObject;
-            }
+            return sceneObjects.OfType<T>();
         }
 
         public IEnumerable<GameObject> GetSceneObjects()
         {
-            for (int i = 0; i < sceneObjects.Count; ++i)
-                yield return sceneObjects[i];
+            return sceneObjects;
         }
 
         public void AddToScene(GameObject gameObject)

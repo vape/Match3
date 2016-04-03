@@ -1,7 +1,9 @@
-﻿using Match3.Core;
+﻿using System;
+
+using Match3.Core;
 using Match3.Scenes;
 using Match3.World;
-using System;
+
 
 namespace Match3
 {
@@ -18,13 +20,7 @@ namespace Match3
         private UIManager uiManager;
 
         private float endTime;
-        private bool noTimeLeft
-        {
-            get
-            {
-                return endTime - App.Time < 0;
-            }
-        }
+        private bool noTimeLeft;
 
         public GameManager()
         {
@@ -45,6 +41,8 @@ namespace Match3
 
         protected override void OnUpdate()
         {
+            noTimeLeft = endTime - App.Time < 0;
+
             if (noTimeLeft)
             {
                 if (gridManager.IsEnabled && !gridManager.FieldAnimating)

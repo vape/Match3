@@ -56,8 +56,9 @@ namespace Match3.Core
 
         public override bool Equals(object obj)
         {
-            if (obj.GetType() == typeof(Rect))
+            if (obj is Rect)
                 return Equals((Rect)obj);
+
             return false;
         }
 

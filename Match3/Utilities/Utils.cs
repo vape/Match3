@@ -1,5 +1,5 @@
 ﻿using System;
-
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -26,20 +26,12 @@ namespace Match3.Utilities
 
         public static bool Any<T>(this T[,] array, Predicate<T> predicate)
         {
-            foreach (var elem in array)
-                if (predicate(elem))
-                    return true;
-
-            return false;
+            return array.Cast<T>().Any(elem => predicate(elem));
         }
 
         public static bool Any<T>(this T[] array, Predicate<T> predicate)
         {
-            foreach (var elem in array)
-                if (predicate(elem))
-                    return true;
-
-            return false;
+            return Enumerable.Any(array, elem => predicate(elem));
         }
 
         public static int GetRand(int min, int max)

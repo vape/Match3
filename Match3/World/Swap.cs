@@ -53,11 +53,11 @@ namespace Match3.World
         }
 
         public Block From
-        { get; private set; }
+        { get; }
         public Block To
-        { get; private set; }
+        { get; }
         public bool CanSwap
-        { get; private set; }
+        { get; }
 
         public Swap(Block fromBlock, Block toBlock)
         {
@@ -78,8 +78,7 @@ namespace Match3.World
                 if (From.IsAnimating || To.IsAnimating)
                     return;
 
-                if (swappedCallback != null)
-                    swappedCallback(this);
+                swappedCallback?.Invoke(this);
             };
 
             From.AttachAnimation(new MovingAnimation(To.ViewRect.Position, To.GridPosition, onMoved));

@@ -13,18 +13,18 @@ namespace Match3.World.Animation
         public bool Animating
         { get; protected set; }
 
-        protected float loadedTime;
-        protected Action<Block> animationEndedCallback;
+        protected float LoadedTime;
+        protected Action<Block> AnimationEndedCallback;
 
-        public BlockAnimation(Action<Block> animationEndedCallback)
+        protected BlockAnimation(Action<Block> animationEndedCallback)
         {
-            this.animationEndedCallback = animationEndedCallback;
+            AnimationEndedCallback = animationEndedCallback;
         }
 
         public void Load(Block block)
         {
             Block = block;
-            loadedTime = App.Time;
+            LoadedTime = App.Time;
             Animating = true;
 
             OnAnimationLoad();
@@ -42,10 +42,10 @@ namespace Match3.World.Animation
         {
             Animating = false;
 
-            if (animationEndedCallback != null)
+            if (AnimationEndedCallback != null)
             {
-                animationEndedCallback(Block);
-                animationEndedCallback = null;
+                AnimationEndedCallback(Block);
+                AnimationEndedCallback = null;
             }
         }
 

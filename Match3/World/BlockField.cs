@@ -91,8 +91,7 @@ namespace Match3.World
 
         public IEnumerator<Block> GetEnumerator()
         {
-            foreach (var block in blocks)
-                yield return block;
+            return blocks.Cast<Block>().GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()

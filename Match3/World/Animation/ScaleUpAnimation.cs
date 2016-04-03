@@ -26,7 +26,7 @@ namespace Match3.World.Animation
 
         protected override Rect OnAnimationUpdate(Rect viewRect)
         {
-            if (App.Time - loadedTime < delay)
+            if (App.Time - LoadedTime < delay)
                 return viewRect;
 
             scale += App.DeltaTime * speed;

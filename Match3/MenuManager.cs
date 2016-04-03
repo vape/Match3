@@ -1,16 +1,11 @@
-﻿using Match3.Core;
-using Match3.Scenes;
-using Match3.Utilities;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using MonoGame.Extended.BitmapFonts;
-using MonoGame.Extended.InputListeners;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using Match3.Core;
+using Match3.Scenes;
+using Match3.Utilities;
+
 
 namespace Match3
 {
@@ -19,9 +14,6 @@ namespace Match3
         private Rect startButtonRect;
         private Texture2D startButton;
         private Texture2D startButtonHighlighted;
-
-        private BitmapFont riffic48;
-        private BitmapFont riffic96;
 
         private ButtonState previousState;
         private bool highlighted;
@@ -35,9 +27,6 @@ namespace Match3
             startButtonRect = new Rect(new Vector2((App.Viewport.Width - startButton.Width) / 2,
                                                    (App.Viewport.Height - startButton.Height) / 2),
                                        new Point(startButton.Width, startButton.Height));
-
-            riffic48 = App.LoadContent<BitmapFont>("Fonts/Riffic_48");
-            riffic96 = App.LoadContent<BitmapFont>("Fonts/Riffic_96");
 
             scale = 0;
         }

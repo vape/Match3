@@ -39,7 +39,7 @@ namespace Match3
         private Texture2D leftLabelBackground;
         private Texture2D rightLabelBackground;
 
-        private float resultScreenAlpha = 0;
+        private float resultScreenAlpha;
 
         public UIManager(float levelTime)
         {
@@ -57,14 +57,14 @@ namespace Match3
             rightLabelBackground = App.LoadContent<Texture2D>("RightLabelBackground");
         }
 
-        public void AddScore(int score, int multiplier)
+        public void AddScore(int scoreValue, int multiplier)
         {
-            this.score += score * multiplier;
+            score += scoreValue * multiplier;
 
             labels.Add(new ScoreLabel()
             {
                 CreationTime = App.Time,
-                Text = " + " + score + (multiplier > 1 ? " x " + multiplier : "")
+                Text = " + " + scoreValue + (multiplier > 1 ? " x " + multiplier : "")
             });
         }
 
@@ -120,8 +120,8 @@ namespace Match3
 
             var timeLeft = stopTime - App.Time > 0 ? stopTime - App.Time : 0;
 
-            sBatch.DrawStringWithShadow(riffic32, String.Format("Score: {0:000000}", score), scoreLabelPosition, Color.White);
-            sBatch.DrawStringWithShadow(riffic32, String.Format("{0:00.0}", timeLeft), timeLabelPosition, Color.White);
+            sBatch.DrawStringWithShadow(riffic32, $"Score: {score:000000}", scoreLabelPosition, Color.White);
+            sBatch.DrawStringWithShadow(riffic32, $"{timeLeft:00.0}", timeLabelPosition, Color.White);
 
             for (int i = 0; i < labels.Count; ++i)
             {

@@ -26,8 +26,8 @@ namespace Match3.World
         {
             var name = blockType.ToString();
 
-            texture = App.LoadContent<Texture2D>(String.Format("Blocks/{0}", name));
-            selected = App.LoadContent<Texture2D>(String.Format("Blocks/{0}_Selected", name));
+            texture = App.LoadContent<Texture2D>($"Blocks/{name}");
+            selected = App.LoadContent<Texture2D>($"Blocks/{name}_Selected");
         }
 
         public static void GetBonusTexture(BlockBonusType bonusType,
@@ -41,7 +41,7 @@ namespace Match3.World
 
             var name = bonusType.ToString();
 
-            texture = App.LoadContent<Texture2D>(String.Format("Blocks/Bonus_{0}", name));
+            texture = App.LoadContent<Texture2D>($"Blocks/Bonus_{name}");
         }
 
         public bool IsAnimating
@@ -53,12 +53,12 @@ namespace Match3.World
         }
 
         public BlockBonusType Bonus
-        { get; private set; }
+        { get; }
         public BlockType Type
-        { get; private set; }
+        { get; }
 
-        public int X { get { return GridPosition.X; } }
-        public int Y { get { return GridPosition.Y; } }
+        public int X => GridPosition.X;
+        public int Y => GridPosition.Y;
 
         public Point GridPosition
         { get; set; }
@@ -119,18 +119,11 @@ namespace Match3.World
             if (Bonus != BlockBonusType.None)
             {
                 sBatch.Draw(bonusTexture, drawRect);
-
-                if (Selected)
-                    sBatch.Draw(selected, drawRect.ScaleFromCenter(0.5f), color);
-                else
-                    sBatch.Draw(texture, drawRect.ScaleFromCenter(0.5f), color);
+                sBatch.Draw(Selected ? selected : texture, drawRect.ScaleFromCenter(0.5f), color);
             }
             else
             {
-                if (Selected)
-                    sBatch.Draw(selected, drawRect, color);
-                else
-                    sBatch.Draw(texture, drawRect, color);
+                sBatch.Draw(Selected ? selected : texture, drawRect, color);
             }
         }
     }

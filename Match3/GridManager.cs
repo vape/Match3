@@ -27,13 +27,7 @@ namespace Match3
         private const int blockSideSize = 48;
         private const int blockGap = 8;
 
-        public bool FieldAnimating
-        {
-            get
-            {
-                return field.Animating;
-            }
-        }
+        public bool FieldAnimating => field.Animating;
 
         public event EventHandler<ChainClearedEventArgs> ChainCleared;
         public event EventHandler<ChainClearedEventArgs> BombCleared;
@@ -185,10 +179,7 @@ namespace Match3
                 OnSwapped(s);
             };
 
-            if (IsValidSwap(swap))
-                swap.Make(onValidSwap);
-            else
-                swap.Make(onInvalidSwap);
+            swap.Make(IsValidSwap(swap) ? onValidSwap : onInvalidSwap);
         }
 
         private void StoreChainBonuses(Chain chain)
@@ -254,7 +245,7 @@ namespace Match3
             {
                 foreach (var block in GetLineBonusBlocks(bonusBlock))
                 {
-                    var speed = 1f;
+                    float speed;
 
                     if (bonusBlock.Bonus == BlockBonusType.HorizontalLine)
                         speed = Math.Abs(block.X - bonusBlock.X);

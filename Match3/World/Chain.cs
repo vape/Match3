@@ -149,15 +149,15 @@ namespace Match3.World
         }
 
         public BlockType BlockType
-        { get; private set; }
+        { get; }
         public ChainType ChainType
-        { get; private set; }
+        { get; }
         public List<Block> Blocks
-        { get; private set; }
+        { get; }
         public Block IntersectionBlock
-        { get; private set; }
+        { get; }
         public int Length
-        { get; private set; }
+        { get; }
 
         public Chain(Chain horizontal, Chain vertical)
             : this(horizontal.Blocks, vertical.Blocks)
@@ -176,13 +176,13 @@ namespace Match3.World
             Blocks = blocks.ToList();
 
             Debug.Assert(Blocks.Count > 2, "Chain is too small.");
-            Debug.Assert(!Blocks.Any((x) => x.Type != Blocks[0].Type), "Different block types in one chain.");
+            Debug.Assert(Blocks.All((x) => x.Type == Blocks[0].Type), "Different block types in one chain.");
 
             if (type == ChainType.Horizontal)
-                Debug.Assert(!Blocks.Any((b) => b.GridPosition.Y != Blocks[0].GridPosition.Y),
+                Debug.Assert(Blocks.All((b) => b.GridPosition.Y == Blocks[0].GridPosition.Y),
                              "Incorrect chain type. Blocks are not in the same column.");
             else if (type == ChainType.Vertical)
-                Debug.Assert(!Blocks.Any((b) => b.GridPosition.X != Blocks[0].GridPosition.X),
+                Debug.Assert(Blocks.All((b) => b.GridPosition.X == Blocks[0].GridPosition.X),
                              "Incorrect chain type. Blocks are not in the same row.");
 
             BlockType = Blocks[0].Type;

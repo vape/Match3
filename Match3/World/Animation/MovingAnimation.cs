@@ -26,13 +26,12 @@ namespace Match3.World.Animation
             this.targetGridPosition = targetGridPosition;
             this.speed = speed;
 
-            this.animationEndedCallback = (block) =>
+            this.AnimationEndedCallback = (block) =>
             {
                 block.GridPosition = this.targetGridPosition;
                 block.ViewRect = new Rect(this.targetViewPosition, block.ViewRect.Size);
 
-                if (animationEndedCallback != null)
-                    animationEndedCallback(block);
+                animationEndedCallback?.Invoke(block);
             };
         }
 

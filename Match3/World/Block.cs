@@ -25,10 +25,9 @@ namespace Match3.World
                                       out Texture2D selected)
         {
             var name = blockType.ToString();
-            var index = Utils.GetRand(1, 3);
 
-            texture = App.LoadContent<Texture2D>(String.Format("Blocks/{0}_{1}", name, index));
-            selected = App.LoadContent<Texture2D>(String.Format("Blocks/{0}_{1}_Selected", name, index));
+            texture = App.LoadContent<Texture2D>(String.Format("Blocks/{0}", name));
+            selected = App.LoadContent<Texture2D>(String.Format("Blocks/{0}_Selected", name));
         }
 
         public static void GetBonusTexture(BlockBonusType bonusType,

@@ -102,6 +102,11 @@ namespace Match3
                 block?.Draw(sBatch);
         }
 
+        protected override void OnDestroy()
+        {
+            mouseListener.MouseDown -= MouseDownHandler;
+            App.InputListener.RemoveListener(mouseListener);
+        }
 
         private void CheckInteraction()
         {

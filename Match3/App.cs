@@ -91,7 +91,7 @@ namespace Match3
             TargetElapsedTime = TimeSpan.FromSeconds(1f / TargetFPS);
             InputListener = new InputListenerManager();
 
-            SetNextScene(new GameScene());
+            SetNextScene(new MenuScene());
 
             background = Content.Load<Texture2D>("Background");
 

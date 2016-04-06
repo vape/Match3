@@ -20,31 +20,7 @@ namespace Match3.World
             return type;
         }
 
-        public static void GetTexture(BlockType blockType, 
-                                      out Texture2D texture, 
-                                      out Texture2D selected)
-        {
-            var name = blockType.ToString();
-
-            texture = App.LoadContent<Texture2D>($"Blocks/{name}");
-            selected = App.LoadContent<Texture2D>($"Blocks/{name}_Selected");
-        }
-
-        public static void GetBonusTexture(BlockBonusType bonusType,
-                                           out Texture2D texture)
-        {
-            if (bonusType == BlockBonusType.None)
-            {
-                texture = null;
-                return;
-            }
-
-            var name = bonusType.ToString();
-
-            texture = App.LoadContent<Texture2D>($"Blocks/Bonus_{name}");
-        }
-
-        public bool IsAnimating
+        public bool Animating
         {
             get
             {
@@ -68,30 +44,31 @@ namespace Match3.World
         { get; set; }
 
         private Texture2D bonusTexture;
+        private Texture2D blockTexture;
+        private Texture2D blockSelectedTexture;
+
         private BlockAnimation animation;
         private Rect drawRect;
-        private Texture2D texture;
-        private Texture2D selected;
         private Color color;
 
         public Block(Point gridPosition, Vector2 viewPosition, Point viewSize,
-                     BlockType? blockType = null, BlockBonusType? blockBonus = null)
+                     BlockType? type = null, BlockBonusType? bonus = null)
         {
-            Type = blockType ?? GetRandomBlockType();
-            Bonus = blockBonus ?? BlockBonusType.None;
+            Type = type ?? GetRandomBlockType();
+            Bonus = bonus ?? BlockBonusType.None;
 
             GridPosition = gridPosition;
             ViewRect = new Rect(viewPosition, viewSize);
 
-            GetTexture(Type, out texture, out selected);
-            GetBonusTexture(Bonus, out bonusTexture);
+            LoadBlockTexture();
+            LoadBonusTexture();
 
             color = Color.White;
         }
 
         public void AttachAnimation(BlockAnimation animation)
         {
-            if (IsAnimating)
+            if (Animating)
                 return;
 
             this.animation = animation;
@@ -100,7 +77,7 @@ namespace Match3.World
 
         public void Update()
         {
-            if (IsAnimating)
+            if (Animating)
             {
                 drawRect = animation.Update(ViewRect);
 
@@ -119,12 +96,28 @@ namespace Match3.World
             if (Bonus != BlockBonusType.None)
             {
                 sBatch.Draw(bonusTexture, drawRect);
-                sBatch.Draw(Selected ? selected : texture, drawRect.ScaleFromCenter(0.5f), color);
+                sBatch.Draw(Selected ? blockSelectedTexture : blockTexture, drawRect.ScaleFromCenter(0.5f), color);
             }
             else
             {
-                sBatch.Draw(Selected ? selected : texture, drawRect, color);
+                sBatch.Draw(Selected ? blockSelectedTexture : blockTexture, drawRect, color);
             }
+        }
+
+        private void LoadBlockTexture()
+        {
+            var name = Type.ToString();
+
+            blockTexture = App.LoadContent<Texture2D>($"Blocks/{name}");
+            blockSelectedTexture = App.LoadContent<Texture2D>($"Blocks/{name}_Selected");
+        }
+
+        public void LoadBonusTexture()
+        {
+            if (Bonus == BlockBonusType.None)
+                bonusTexture = null;
+            else
+                bonusTexture = App.LoadContent<Texture2D>($"Blocks/Bonus_{Bonus.ToString()}");
         }
     }
 }

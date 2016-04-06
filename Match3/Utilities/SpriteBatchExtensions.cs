@@ -7,8 +7,10 @@ using Match3.Core;
 
 namespace Match3.Utilities
 {
-    public static partial class Utils
+    public static class SpriteBatchExtensions
     {
+        private static Texture2D square = Utils.GetSolidRectangleTexture(1, 1, Color.Gray);
+
         public static void DrawStringWithShadow(this SpriteBatch spriteBatch, BitmapFont font,
                                                 string text, Vector2 position, Color color,
                                                 Color? shadowColor = null,
@@ -20,7 +22,7 @@ namespace Match3.Utilities
             spriteBatch.DrawString(font, text, position, color);
         }
 
-        public static void DrawStringFromCenter(this SpriteBatch spriteBatch, BitmapFont font, 
+        public static void DrawStringFromCenter(this SpriteBatch spriteBatch, BitmapFont font,
                                                 string text, Vector2 position, Color color)
         {
             var rect = font.GetStringRectangle(text, Vector2.Zero);
@@ -30,28 +32,15 @@ namespace Match3.Utilities
             spriteBatch.DrawString(font, text, position, color);
         }
 
+        public static void DrawRect(this SpriteBatch sBatch, Rectangle rect, Color? color = null)
+        {
+            sBatch.Draw(square, rect, color ?? new Color(Color.Red, 0.75f));
+        }
+
         public static void Draw(this SpriteBatch spriteBatch, Texture2D texture,
                                 Rect rectangle, Color? color = null)
         {
             spriteBatch.Draw(texture, rectangle.ToMonogameRectangle(), color ?? Color.White);
-        }
-
-        public static Texture2D GetSolidRectangleTexture(int width, int height, Color color)
-        {
-            var texture = new Texture2D(App.Graphics, width, height);
-
-            Color[] data = new Color[width * height];
-            for (int i = 0; i < data.Length; ++i)
-                data[i] = color;
-
-            texture.SetData(data);
-
-            return texture;
-        }
-
-        public static void DrawRect(this SpriteBatch sBatch, Rectangle rect, Color? color = null)
-        {
-            sBatch.Draw(square, rect, color ?? new Color(Color.Red, 0.75f));
         }
     }
 }

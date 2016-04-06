@@ -51,8 +51,10 @@
     <Compile Include="Scenes\GameScene.cs" />
     <Compile Include="Scenes\MenuScene.cs" />
     <Compile Include="UIManager.cs" />
+    <Compile Include="Utilities\ArrayExtensions.cs" />
+    <Compile Include="Utilities\BlockExtensions.cs" />
+    <Compile Include="Utilities\SpriteBatchExtensions.cs" />
     <Compile Include="Utilities\Utils.cs" />
-    <Compile Include="Utilities\Utils.Graphics.cs" />
     <Compile Include="World\Animation\ScaleUpAnimation.cs" />
     <Compile Include="World\Animation\BlockAnimation.cs" />
     <Compile Include="World\Animation\ScaleDownAnimation.cs" />

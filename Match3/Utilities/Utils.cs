@@ -1,38 +1,14 @@
 ﻿using System;
-using System.Linq;
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-
-using Match3.Core;
-using Match3.World;
 
 
 namespace Match3.Utilities
 {
-    public static partial class Utils
+    public static class Utils
     {
         private static Random rand;
-        private static Texture2D square;
-
-        static Utils()
-        {
-            square = GetSolidRectangleTexture(1, 1, Color.Gray);
-        }
-
-        public static bool Usable(this Block block)
-        {
-            return block != null && !block.IsAnimating;
-        }
-
-        public static bool Any<T>(this T[,] array, Predicate<T> predicate)
-        {
-            return array.Cast<T>().Any(elem => predicate(elem));
-        }
-
-        public static bool Any<T>(this T[] array, Predicate<T> predicate)
-        {
-            return Enumerable.Any(array, elem => predicate(elem));
-        }
 
         public static int GetRand(int min, int max)
         {
@@ -42,9 +18,17 @@ namespace Match3.Utilities
             return rand.Next(min, max);
         }
 
-        public static float SmoothDamp(float current, float target, float t)
+        public static Texture2D GetSolidRectangleTexture(int width, int height, Color color)
         {
-            return ((current * (t - 1)) + target) / t;
+            var texture = new Texture2D(App.Graphics, width, height);
+
+            Color[] data = new Color[width * height];
+            for (int i = 0; i < data.Length; ++i)
+                data[i] = color;
+
+            texture.SetData(data);
+
+            return texture;
         }
     }
 }

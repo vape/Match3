@@ -1,7 +1,5 @@
 ﻿using System;
 
-using Microsoft.Xna.Framework.Audio;
-
 using Match3.Core;
 using Match3.Scenes;
 using Match3.World;
@@ -20,34 +18,41 @@ namespace Match3
 
         private GridManager gridManager;
         private UIManager uiManager;
+        private SoundManager soundManager;
 
-        private SoundEffect chainClearedSound;
-        private float endTime;
-        private bool noTimeLeft;
+        private float startTime;
+        private float levelTime;
 
         public GameManager()
         {
-            uiManager = new UIManager(LevelTime);
+            uiManager = new UIManager();
             uiManager.RestartPressed += RestartPressedHandler;
             uiManager.MenuPressed += MenuPressedHandler;
 
             gridManager = new GridManager(FieldWidth, FieldHeight);
-            gridManager.LineCleared += LineClearedHandler;
-            gridManager.BombCleared += BombClearedHandler;
-            gridManager.ChainCleared += ChainClearedHandler;
+            gridManager.LineCollected += LineCollectedHandler;
+            gridManager.BombCollected += BombCollectedHandler;
+            gridManager.ChainCollected += ChainCollectedHandler;
+            gridManager.BlockCollected += BlockCollectedHandler;
+
+            soundManager = new SoundManager();
 
             App.Scene.AddToScene(uiManager);
             App.Scene.AddToScene(gridManager);
+            App.Scene.AddToScene(soundManager);
 
-            chainClearedSound = App.LoadContent<SoundEffect>("Sound/ChainCleared");
-            endTime = App.Time + LevelTime;
+            startTime = App.Time;
+            levelTime = LevelTime;
         }
 
         protected override void OnUpdate()
         {
-            noTimeLeft = endTime - App.Time < 0;
+            var timeLeft = levelTime - (App.Time - startTime);
 
-            if (noTimeLeft)
+            uiManager.TimeLeft = timeLeft;
+            uiManager.Score = Score;
+
+            if (timeLeft <= 0)
             {
                 if (gridManager.IsEnabled && !gridManager.FieldAnimating)
                 {
@@ -59,11 +64,8 @@ namespace Match3
 
         private void AddScore(int score, int multiplier)
         {
-            var pitch = multiplier/5f;
-
             Score += score * multiplier;
-            uiManager.AddScore(score, multiplier);
-            chainClearedSound.Play(1, pitch > 1 ? 1 : pitch, 0);
+            uiManager.ShowScore(score, multiplier);
         }
 
         #region Events
@@ -78,19 +80,27 @@ namespace Match3
             App.LoadScene(new MenuScene());
         }
 
-        private void LineClearedHandler(object sender, ChainClearedEventArgs e)
+        private void BlockCollectedHandler(object sender, BlockCollectedEventArgs e)
+        {
+            // soundManager.PlayBlockCollected();
+        }
+
+        private void LineCollectedHandler(object sender, ChainCollectedEventArgs e)
+        {
+            AddScore(e.ChainLength * 150, e.Multiplier);
+            soundManager.PlayChainCollected(e.Multiplier);
+        }
+
+        private void BombCollectedHandler(object sender, ChainCollectedEventArgs e)
+        {
+            AddScore(e.ChainLength * 150, e.Multiplier);
+            soundManager.PlayChainCollected(e.Multiplier);
+        }
+
+        private void ChainCollectedHandler(object sender, ChainCollectedEventArgs e)
         {
             AddScore(e.ChainLength * 100, e.Multiplier);
-        }
-
-        private void BombClearedHandler(object sender, ChainClearedEventArgs e)
-        {
-            AddScore(e.ChainLength * 200, e.Multiplier);
-        }
-
-        private void ChainClearedHandler(object sender, ChainClearedEventArgs e)
-        {
-            AddScore(e.ChainLength * 50, e.Multiplier);
+            soundManager.PlayChainCollected(e.Multiplier);
         }
 
         #endregion

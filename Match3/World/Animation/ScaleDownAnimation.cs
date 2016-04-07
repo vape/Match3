@@ -24,7 +24,7 @@ namespace Match3.World.Animation
             this.scale = 1;
         }
 
-        protected override Rect OnAnimationUpdate(Rect viewRect)
+        protected override Rect OnUpdate(Rect viewRect)
         {
             if (App.Time - LoadedTime < delay)
                 return viewRect;

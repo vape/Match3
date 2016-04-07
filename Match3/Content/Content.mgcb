@@ -310,9 +310,15 @@
 /processorParam:TextureFormat=Color
 /build:Menu/StartButtonHighlighted.png
 
-#begin Sound/ChainCleared.wav
+#begin Sound/BlockCollected.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Sound/ChainCleared.wav
+/build:Sound/BlockCollected.wav
+
+#begin Sound/ChainCollected.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sound/ChainCollected.wav
 

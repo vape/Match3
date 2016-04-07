@@ -9,53 +9,51 @@ namespace Match3.World.Animation
 {
     public class MovingAnimation : BlockAnimation
     {
-        public const float DefaltSpeed = 4;
+        public const float DefaltSpeed = 4f;
 
-        private Vector2 currentViewPosition;
-        private Vector2 targetViewPosition;
-        private Point targetGridPosition;
+        private Vector2 currentPosition;
+        private Vector2 targetPosition;
+        private bool changeActualPosition;
         private float speed;
 
-        public MovingAnimation(Vector2 targetViewPosition,
-                               Point targetGridPosition,
-                               Action<Block> animationEndedCallback,
+        public MovingAnimation(Vector2 targetPosition,
+                               bool changeActualPosition,
+                               Action<Block> animationEndedCallback, 
                                float speed = DefaltSpeed)
             : base(animationEndedCallback)
         {
-            this.targetViewPosition = targetViewPosition;
-            this.targetGridPosition = targetGridPosition;
+            this.targetPosition = targetPosition;
+            this.changeActualPosition = changeActualPosition;
             this.speed = speed;
-
-            this.AnimationEndedCallback = (block) =>
-            {
-                block.GridPosition = this.targetGridPosition;
-                block.ViewRect = new Rect(this.targetViewPosition, block.ViewRect.Size);
-
-                animationEndedCallback?.Invoke(block);
-            };
         }
 
-        protected override void OnAnimationLoad()
+        protected override void OnLoaded()
         {
-            currentViewPosition = Block.ViewRect.Position;
+            currentPosition = Block.ViewRect.Position;
         }
 
-        protected override Rect OnAnimationUpdate(Rect viewRect)
+        protected override void OnStopping()
         {
-            var direction = targetViewPosition - currentViewPosition;
+            if (changeActualPosition)
+                Block.ViewRect = new Rect(targetPosition, Block.ViewRect.Size);
+        }
+
+        protected override Rect OnUpdate(Rect viewRect)
+        {
+            var direction = targetPosition - currentPosition;
             var distanceToTarget = direction.Length();
             var moveDistance = 100 * speed * App.DeltaTime;
 
             if (moveDistance > distanceToTarget)
                 moveDistance = distanceToTarget;
 
-            currentViewPosition = Vector2.Add(Vector2.Normalize(direction) * moveDistance,
-                                              currentViewPosition);
+            currentPosition = Vector2.Add(Vector2.Normalize(direction) * moveDistance,
+                                          currentPosition);
 
-            if (currentViewPosition == targetViewPosition)
+            if (currentPosition == targetPosition)
                 Animating = false;
 
-            return new Rect(currentViewPosition, viewRect.Size);
+            return new Rect(currentPosition, viewRect.Size);
         }
     }
 }

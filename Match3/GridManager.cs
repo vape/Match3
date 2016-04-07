@@ -29,15 +29,16 @@ namespace Match3
 
         public bool FieldAnimating => field.Animating;
 
-        public event EventHandler<ChainClearedEventArgs> ChainCleared;
-        public event EventHandler<ChainClearedEventArgs> BombCleared;
-        public event EventHandler<ChainClearedEventArgs> LineCleared;
+        public event EventHandler<ChainCollectedEventArgs> ChainCollected;
+        public event EventHandler<ChainCollectedEventArgs> BombCollected;
+        public event EventHandler<ChainCollectedEventArgs> LineCollected;
+        public event EventHandler<BlockCollectedEventArgs> BlockCollected;
 
         private Point blockSize;
         private Point fieldSize;
         private Point fieldPosition;
 
-        private BlockField field;
+        private Field field;
         private Block selectedBlock;
         private List<BonusInfo> bonuses;
 
@@ -59,7 +60,7 @@ namespace Match3
 
         protected override void OnLoad()
         {
-            field = new BlockField(GenerateInitialField());
+            field = new Field(GenerateInitialField());
 
             Action<Block> animationEnded = (block) =>
             {
@@ -121,7 +122,7 @@ namespace Match3
 
                             if (!swap.CanSwap)
                             {
-                                Deselect(); // or Select(block);
+                                Select(block); // or Deselect();
                                 break;
                             }
 
@@ -135,6 +136,9 @@ namespace Match3
 
         private Block[,] GenerateInitialField()
         {
+            System.Diagnostics.Debug.Assert(matchLength >= 3, 
+                "Initial field might be invalid for given matchLength.");
+
             Block[,] field = new Block[fieldSize.Y, fieldSize.X];
 
             for (int y = 0; y < fieldSize.Y; ++y)
@@ -144,7 +148,6 @@ namespace Match3
                     var gridPos = new Point(x, y);
                     var viewPos = GridToView(gridPos);
 
-                    // Assumes matchLength >= 3
                     BlockType blockType;
                     do
                         blockType = Block.GetRandomBlockType();
@@ -163,23 +166,23 @@ namespace Match3
             return field;
         }
 
-        #region Field Control
-
         private void PerformSwap(Swap swap)
         {
-            Action<Swap> onInvalidSwap = (s) =>
+            var swapValid = IsValidSwap(swap);
+
+            Action<Swap> animationEnded = (s) =>
             {
-                s.Make(); // swap back
+                if (swapValid)
+                {
+                    field.Swap(s);
+                    OnSwapped(s);
+                    return;
+                }
+
+                s.Move(); // swap back
             };
 
-            Action<Swap> onValidSwap = (s) =>
-            {
-                field.SwapValues(s.From.GridPosition, s.To.GridPosition);
-
-                OnSwapped(s);
-            };
-
-            swap.Make(IsValidSwap(swap) ? onValidSwap : onInvalidSwap);
+            swap.Move(animationEnded);
         }
 
         private void StoreChainBonuses(Chain chain)
@@ -205,7 +208,7 @@ namespace Match3
                                                        BlockBonusType.HorizontalLine :
                                                        BlockBonusType.VerticalLine,
                         BlockType = chain.BlockType,
-                        GridPosition = chain.Blocks[Utils.GetRand(0, 4)].GridPosition
+                        GridPosition = chain[Utils.GetRand(0, 4)].GridPosition
                     };
 
                     bonuses.Add(bonus);
@@ -216,7 +219,7 @@ namespace Match3
                     {
                         BonusType = BlockBonusType.Bomb,
                         BlockType = chain.BlockType,
-                        GridPosition = chain.Blocks[Utils.GetRand(0, chain.Length)].GridPosition
+                        GridPosition = chain[Utils.GetRand(0, chain.Length)].GridPosition
                     };
 
                     bonuses.Add(bonus);
@@ -224,26 +227,30 @@ namespace Match3
             }
         }
 
-        private void ClearBonus(Block bonusBlock, Action<Block> animationEndedCallback = null)
+        private void CollectBonus(Block bonusBlock, Action<Block> animationEndedCallback = null)
         {
             if (bonusBlock.Bonus == BlockBonusType.Bomb)
             {
-                foreach (var block in GetBombBonusBlocks(bonusBlock))
+                var bombBlocks = GetBombBonusBlocks(bonusBlock);
+
+                foreach (var block in bombBlocks)
                 {
                     block.AttachAnimation(new ScaleDownAnimation(animationEndedCallback,
                                                                  delay: 0.35f));
 
                     if (block.Bonus != BlockBonusType.None &&
                         block != bonusBlock)
-                        ClearBonus(block, animationEndedCallback);
+                        CollectBonus(block, animationEndedCallback);
                 }
 
-                RaiseBombCleared();
+                RaiseBombCollected(bombBlocks.Count);
             }
             else if (bonusBlock.Bonus == BlockBonusType.HorizontalLine ||
                      bonusBlock.Bonus == BlockBonusType.VerticalLine)
             {
-                foreach (var block in GetLineBonusBlocks(bonusBlock))
+                var lineBlocks = GetLineBonusBlocks(bonusBlock);
+
+                foreach (var block in lineBlocks)
                 {
                     float speed;
 
@@ -258,25 +265,26 @@ namespace Match3
 
                     if (block.Bonus != BlockBonusType.None &&
                         block != bonusBlock)
-                        ClearBonus(block, animationEndedCallback);
+                        CollectBonus(block, animationEndedCallback);
                 }
 
-                RaiseLineCleared();
+                RaiseLineCollected(lineBlocks.Count);
             }
         }
 
-        private void Clear()
+        private void Collect()
         {
-            var chains = Chain.FindChains(field, matchLength);
+            var chains = field.FindChains(matchLength);
 
             Action<Block> animationEnded = (block) =>
             {
                 field[block] = null;
+                RaiseBlockCollected(block);
 
                 if (field.Animating)
                     return;
 
-                OnCleared(chains.Count);
+                OnCollected(chains.Count);
             };
 
             foreach (var chain in chains)
@@ -284,22 +292,22 @@ namespace Match3
                 if (chain.Length > 3)
                     StoreChainBonuses(chain);
 
-                foreach (var block in chain.Blocks)
+                foreach (var block in chain)
                 {
                     block.AttachAnimation(new ScaleDownAnimation(animationEnded));
 
                     if (block.Bonus != BlockBonusType.None)
-                        ClearBonus(block, animationEnded);
+                        CollectBonus(block, animationEnded);
                 }
 
-                RaiseChainCleared(chain.Length);
+                RaiseChainCollected(chain.Length);
             }
 
             if (chains.Count == 0)
-                OnCleared(0);
+                OnCollected(0);
         }
 
-        private void Refill()
+        private void Fill()
         {
             int blocksCreated = 0;
 
@@ -308,7 +316,7 @@ namespace Match3
                 if (field.Animating)
                     return;
 
-                OnRefilled(blocksCreated);
+                OnFilled(blocksCreated);
             };
 
             for (int y = 0; y < fieldSize.Y; ++y)
@@ -322,21 +330,19 @@ namespace Match3
                         var speed = 2 * (y + 3);
 
                         var block = new Block(gridPosition, viewPosition - new Vector2(0, 200), blockSize);
-                        block.AttachAnimation(new MovingAnimation(viewPosition, gridPosition, 
-                                                                  animationEnded, speed));
+                        block.AttachAnimation(new MovingAnimation(viewPosition, true, animationEnded, speed));
 
-
-                        field[y, x] = block;
+                        field[gridPosition] = block;
                         blocksCreated++;
                     }
                 }
             }
 
             if (blocksCreated == 0)
-                OnRefilled(0);
+                OnFilled(0);
         }
 
-        private void FillGaps()
+        private void Collapse()
         {
             int blocksMoved = 0;
             int bonusesAdded = 0;
@@ -346,7 +352,7 @@ namespace Match3
                 if (field.Animating)
                     return;
 
-                OnGapsFilled(blocksMoved, bonusesAdded);
+                OnCollapsed(blocksMoved, bonusesAdded);
             };
 
             foreach (var bonus in bonuses)
@@ -378,8 +384,8 @@ namespace Match3
                                 var viewPosition = GridToView(x, y - offset);
                                 var speed = ((y - offset) + 3);
 
-                                field[i, x].AttachAnimation(new MovingAnimation(viewPosition, 
-                                                                                gridPosition, 
+                                field[i, x].AttachAnimation(new MovingAnimation(viewPosition,
+                                                                                true,
                                                                                 animationEnded,
                                                                                 speed));
                                 field[i, x].GridPosition = gridPosition;
@@ -395,10 +401,8 @@ namespace Match3
             }
 
             if (blocksMoved == 0 && bonusesAdded == 0)
-                OnGapsFilled(0, 0);
+                OnCollapsed(0, 0);
         }
-
-        #endregion
 
         #region Main
 
@@ -406,27 +410,27 @@ namespace Match3
         {
             currentMultiplier = 1;
 
-            Clear();
+            Collect();
         }
 
-        private void OnCleared(int chainsCleared)
+        private void OnCollected(int chainsCount)
         {
-            if (chainsCleared != 0)
+            if (chainsCount != 0)
             {
                 currentMultiplier++;
-                FillGaps();
+                Collapse();
             }
         }
 
-        private void OnGapsFilled(int blocksMoved, int bonusesAdded)
+        private void OnCollapsed(int blocksMoved, int bonusesAdded)
         {
-            Refill();
+            Fill();
         }
 
-        private void OnRefilled(int blocksCreated)
+        private void OnFilled(int blocksCreated)
         {
             if (blocksCreated != 0)
-                Clear();
+                Collect();
         }
 
         private void OnLoaded()
@@ -437,10 +441,10 @@ namespace Match3
         #endregion
 
         #region Utils
-        
-        private bool IsValidSwap(Swap swap)
+
+        public bool IsValidSwap(Swap swap)
         {
-            foreach (var other in Swap.FindSwaps(field, matchLength))
+            foreach (var other in field.FindSwaps(matchLength))
             {
                 if ((swap.From.GridPosition == other.From.GridPosition &&
                      swap.To.GridPosition == other.To.GridPosition) ||
@@ -521,19 +525,24 @@ namespace Match3
 
         #region Events
 
-        private void RaiseLineCleared()
+        private void RaiseBlockCollected(Block block)
         {
-            LineCleared?.Invoke(this, new ChainClearedEventArgs(8, currentMultiplier));
+            BlockCollected?.Invoke(this, new BlockCollectedEventArgs(block, currentMultiplier));
         }
 
-        private void RaiseBombCleared()
+        private void RaiseLineCollected(int blocksCollected)
         {
-            BombCleared?.Invoke(this, new ChainClearedEventArgs(9, currentMultiplier));
+            LineCollected?.Invoke(this, new ChainCollectedEventArgs(blocksCollected, currentMultiplier));
         }
 
-        private void RaiseChainCleared(int chainLength)
+        private void RaiseBombCollected(int blocksCollected)
         {
-            ChainCleared?.Invoke(this, new ChainClearedEventArgs(chainLength, currentMultiplier));
+            BombCollected?.Invoke(this, new ChainCollectedEventArgs(blocksCollected, currentMultiplier));
+        }
+
+        private void RaiseChainCollected(int blocksCollected)
+        {
+            ChainCollected?.Invoke(this, new ChainCollectedEventArgs(blocksCollected, currentMultiplier));
         }
 
         private void MouseDownHandler(object sender, MouseEventArgs e)

@@ -5,7 +5,6 @@ using Match3.Core;
 
 namespace Match3.World.Animation
 {
-    // TODO: Add special falling animation, instead of simple moving
     public abstract class BlockAnimation
     {
         public Block Block
@@ -16,6 +15,8 @@ namespace Match3.World.Animation
         protected float LoadedTime;
         protected Action<Block> AnimationEndedCallback;
 
+        private bool stopped;
+
         protected BlockAnimation(Action<Block> animationEndedCallback)
         {
             AnimationEndedCallback = animationEndedCallback;
@@ -23,11 +24,13 @@ namespace Match3.World.Animation
 
         public void Load(Block block)
         {
+            OnLoading();
+
             Block = block;
             LoadedTime = App.Time;
             Animating = true;
 
-            OnAnimationLoad();
+            OnLoaded();
         }
 
         public Rect Update(Rect viewRect)
@@ -35,22 +38,29 @@ namespace Match3.World.Animation
             if (!Animating)
                 return viewRect;
 
-            return OnAnimationUpdate(viewRect);
+            return OnUpdate(viewRect);
         }
 
         public void Stop()
         {
-            Animating = false;
-
-            if (AnimationEndedCallback != null)
+            if (!stopped)
             {
-                AnimationEndedCallback(Block);
-                AnimationEndedCallback = null;
+                OnStopping();
+
+                Animating = false;
+                AnimationEndedCallback?.Invoke(Block);
+                stopped = true;
+
+                OnStopped();
             }
         }
 
-        protected virtual void OnAnimationLoad() { }
-        protected virtual Rect OnAnimationUpdate(Rect viewRect)
+        protected virtual void OnLoading() { }
+        protected virtual void OnLoaded() { }
+        protected virtual void OnStopping() { }
+        protected virtual void OnStopped() { }
+
+        protected virtual Rect OnUpdate(Rect viewRect)
         {
             return viewRect;
         }

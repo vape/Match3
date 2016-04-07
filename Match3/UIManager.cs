@@ -25,9 +25,11 @@ namespace Match3
 
         public GameScreen CurrentScreen
         { get; set; }
+        public int Score
+        { get; set; }
+        public float TimeLeft
+        { get; set; }
 
-        private int score;
-        private float stopTime;
         private List<ScoreLabel> labels;
         private float labelAliveTime;
 
@@ -41,10 +43,8 @@ namespace Match3
 
         private float resultScreenAlpha;
 
-        public UIManager(float levelTime)
+        public UIManager()
         {
-            score = 0;
-            stopTime = App.Time + levelTime;
             labels = new List<ScoreLabel>();
             labelAliveTime = 4;
 
@@ -57,14 +57,12 @@ namespace Match3
             rightLabelBackground = App.LoadContent<Texture2D>("RightLabelBackground");
         }
 
-        public void AddScore(int scoreValue, int multiplier)
+        public void ShowScore(int score, int multiplier)
         {
-            score += scoreValue * multiplier;
-
             labels.Add(new ScoreLabel()
             {
                 CreationTime = App.Time,
-                Text = " + " + scoreValue + (multiplier > 1 ? " x " + multiplier : "")
+                Text = " + " + score + (multiplier > 1 ? " x " + multiplier : "")
             });
         }
 
@@ -73,12 +71,22 @@ namespace Match3
             switch (CurrentScreen)
             {
                 case GameScreen.Game:
-                    labels.RemoveAll((x) => App.Time - x.CreationTime > labelAliveTime);
+                    UpdateGameScreen();
                     break;
                 case GameScreen.Result:
                     UpdateResultScreen();
                     break;
             }
+        }
+
+        private void UpdateGameScreen()
+        {
+            labels.RemoveAll((x) => App.Time - x.CreationTime > labelAliveTime);
+
+            var keyboardState = Keyboard.GetState();
+
+            if (keyboardState.IsKeyDown(Keys.Escape))
+                MenuPressed?.Invoke(this, EventArgs.Empty);
         }
 
         private void UpdateResultScreen()
@@ -118,9 +126,9 @@ namespace Match3
             sBatch.Draw(leftLabelBackground, scoreLabelBackgroundRect, Color.White);
             sBatch.Draw(rightLabelBackground, timeLabelBackgroundRect, Color.White);
 
-            var timeLeft = stopTime - App.Time > 0 ? stopTime - App.Time : 0;
+            var timeLeft = TimeLeft > 0 ? TimeLeft : 0;
 
-            sBatch.DrawStringWithShadow(riffic32, $"Score: {score:000000}", scoreLabelPosition, Color.White);
+            sBatch.DrawStringWithShadow(riffic32, $"Score: {Score:000000}", scoreLabelPosition, Color.White);
             sBatch.DrawStringWithShadow(riffic32, $"{timeLeft:00.0}", timeLabelPosition, Color.White);
 
             for (int i = 0; i < labels.Count; ++i)
@@ -136,9 +144,12 @@ namespace Match3
         {
             sBatch.DrawRect(App.Viewport.Bounds, new Color(Color.Black, resultScreenAlpha));
 
-            sBatch.DrawStringFromCenter(riffic96, "SCORE: " + score, App.Viewport.Bounds.Center.ToVector2(), Color.White);
+            sBatch.DrawStringFromCenter(riffic96, $"SCORE: {Score}", 
+                                        App.Viewport.Bounds.Center.ToVector2(), 
+                                        Color.White);
             sBatch.DrawStringFromCenter(riffic24, "press Space to restart, or Escape to exit to menu",
-                                        (App.Viewport.Bounds.Center + new Point(0, 50)).ToVector2(), Color.White);
+                                        (App.Viewport.Bounds.Center + new Point(0, 50)).ToVector2(), 
+                                        Color.White);
         }
     }
 }
